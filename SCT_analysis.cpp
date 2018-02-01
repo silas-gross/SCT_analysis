@@ -53,11 +53,13 @@ void scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_cod
 					 //std::cout << "error on line " <<line <<std::endl; }
 				}
 				vals.push_back(lvec);
-				std::cout << vals.size() << std::endl;
+				std::cout << vals.at(line).at(0) << std::endl;
+				//std::cout << vals.size() << std::endl;
 				
 			}
 			else continue;
 			if (line == 1835)esccondition=false;
+			//std::cout << vals.at(2).size() << std::endl;
 		
 		}
 	}
