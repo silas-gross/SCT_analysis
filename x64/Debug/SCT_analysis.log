@@ -1,0 +1,23 @@
+﻿Build started 2/1/2018 7:52:15 AM.
+     1>Project "C:\Users\Silas Grossberndt\documents\visual studio 2015\Projects\SCT_analysis\SCT_analysis\SCT_analysis.vcxproj" on node 2 (Build target(s)).
+     1>Link:
+         C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\Silas Grossberndt\documents\visual studio 2015\Projects\SCT_analysis\x64\Debug\SCT_analysis.exe" /INCREMENTAL /NOLOGO /LIBPATH:C:\root_v5.34.36\lib libhist.lib libTree.lib libGPad.lib libRIO.lib libHistpainter.lib libCore.lib libGraf.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /Debug /PDB:"C:\Users\Silas Grossberndt\documents\visual studio 2015\Projects\SCT_analysis\x64\Debug\SCT_analysis.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\Silas Grossberndt\documents\visual studio 2015\Projects\SCT_analysis\x64\Debug\SCT_analysis.lib" /MACHINE:X64 x64\Debug\SCT_analysis.obj
+         x64\Debug\stdafx.obj
+     1>SCT_analysis.obj : error LNK2019: unresolved external symbol "public: static void * __cdecl TStorage::ObjectAlloc(unsigned __int64)" (?ObjectAlloc@TStorage@@SAPEAX_K@Z) referenced in function "public: static void * __cdecl TObject::operator new(unsigned __int64)" (??2TObject@@SAPEAX_K@Z)
+     1>SCT_analysis.obj : error LNK2019: unresolved external symbol "public: __cdecl TVersionCheck::TVersionCheck(int)" (??0TVersionCheck@@QEAA@H@Z) referenced in function "void __cdecl `dynamic initializer for 'gVersionCheck''(void)" (??__EgVersionCheck@@YAXXZ)
+     1>SCT_analysis.obj : error LNK2019: unresolved external symbol "public: static void __cdecl TObject::operator delete(void *)" (??3TObject@@SAXPEAX@Z) referenced in function "int `void __cdecl scan_dat_file(class std::basic_fstream<char,struct std::char_traits<char> > *,class TFile *,int,class basic_fstream<char,struct std::char_traits<char> >::basic_string<char,struct std::char_traits<char>,class std::allocator<char> >)'::`1'::dtor$7" (?dtor$7@?0??scan_dat_file@@YAXPEAV?$basic_fstream@DU?$char_traits@D@std@@@std@@PEAVTFile@@HV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@@Z@4HA)
+     1>SCT_analysis.obj : error LNK2019: unresolved external symbol "public: __cdecl TFile::TFile(char const *,char const *,char const *,int)" (??0TFile@@QEAA@PEBD00H@Z) referenced in function main
+     1>SCT_analysis.obj : error LNK2019: unresolved external symbol "public: __cdecl TH1F::TH1F(char const *,char const *,int,double,double)" (??0TH1F@@QEAA@PEBD0HNN@Z) referenced in function "void __cdecl scan_dat_file(class std::basic_fstream<char,struct std::char_traits<char> > *,class TFile *,int,class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> >)" (?scan_dat_file@@YAXPEAV?$basic_fstream@DU?$char_traits@D@std@@@std@@PEAVTFile@@HV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@@Z)
+     1>C:\root_v5.34.36\lib\libhist.lib : warning LNK4272: library machine type 'X86' conflicts with target machine type 'x64'
+     1>C:\root_v5.34.36\lib\libTree.lib : warning LNK4272: library machine type 'X86' conflicts with target machine type 'x64'
+     1>C:\root_v5.34.36\lib\libGPad.lib : warning LNK4272: library machine type 'X86' conflicts with target machine type 'x64'
+     1>C:\root_v5.34.36\lib\libRIO.lib : warning LNK4272: library machine type 'X86' conflicts with target machine type 'x64'
+     1>C:\root_v5.34.36\lib\libHistpainter.lib : warning LNK4272: library machine type 'X86' conflicts with target machine type 'x64'
+     1>C:\root_v5.34.36\lib\libCore.lib : warning LNK4272: library machine type 'X86' conflicts with target machine type 'x64'
+     1>C:\root_v5.34.36\lib\libGraf.lib : warning LNK4272: library machine type 'X86' conflicts with target machine type 'x64'
+     1>C:\Users\Silas Grossberndt\documents\visual studio 2015\Projects\SCT_analysis\x64\Debug\SCT_analysis.exe : fatal error LNK1120: 5 unresolved externals
+     1>Done Building Project "C:\Users\Silas Grossberndt\documents\visual studio 2015\Projects\SCT_analysis\SCT_analysis\SCT_analysis.vcxproj" (Build target(s)) -- FAILED.
+
+Build FAILED.
+
+Time Elapsed 00:00:00.27
