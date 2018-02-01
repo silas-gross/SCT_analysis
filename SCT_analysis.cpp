@@ -42,7 +42,7 @@ void scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_cod
 				while (std::getline(temp, temp2, ' ')) columns.push_back(temp2);
 				std::vector <float>lvec;
 				for (int i = 0; i < columns.size(); i++) {
-					//std::cout << columns.at(i) << std::endl;
+					std::cout << columns.at(i) << std::endl;
 					try {
 							lvec.push_back(std::stof(columns.at(i).c_str()));
 							//std::cout << std::stof(columns.at(i).c_str()) << std::endl;
@@ -53,7 +53,7 @@ void scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_cod
 					 //std::cout << "error on line " <<line <<std::endl; }
 				}
 				vals.push_back(lvec);
-				std::cout << vals.at(line).at(0) << std::endl;
+				//std::cout << lvec.at(0) << std::endl;
 				//std::cout << vals.size() << std::endl;
 				
 			}
