@@ -1,17 +1,15 @@
-﻿Build started 2/2/2018 5:19:48 AM.
+﻿Build started 2/2/2018 9:49:33 AM.
      1>Project "C:\Users\Silas Grossberndt\Documents\Visual Studio 2015\Projects\SCT_analysis\SCT_analysis\SCT_analysis.vcxproj" on node 2 (Build target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\CL.exe /c /IC:\root_v5.34.36\include /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _CRT_SECURE_NO_WARNINGS /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Yu"stdafx.h" /Fp"Debug\SCT_analysis.pch" /Fo"Debug\\" /Fd"Debug\vc140.pdb" /Gd /TP /analyze- /errorReport:prompt SCT_analysis.cpp
          SCT_analysis.cpp
-     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(49): warning C4018: '<': signed/unsigned mismatch
-     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(84): warning C4018: '<': signed/unsigned mismatch
-     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(97): warning C4018: '<': signed/unsigned mismatch
-     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(97): warning C4244: 'argument': conversion from 'float' to 'Int_t', possible loss of data
-     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(99): warning C4018: '<': signed/unsigned mismatch
-     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(101): warning C4244: 'argument': conversion from 'float' to 'Int_t', possible loss of data
-     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(103): warning C4018: '<': signed/unsigned mismatch
-     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(55): warning C4101: 'e': unreferenced local variable
-     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(92): warning C4101: 'e': unreferenced local variable
+     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(57): warning C4018: '<': signed/unsigned mismatch
+     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(93): warning C4018: '<': signed/unsigned mismatch
+     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(106): warning C4018: '<': signed/unsigned mismatch
+     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(113): warning C4018: '<': signed/unsigned mismatch
+     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(120): warning C4018: '<': signed/unsigned mismatch
+     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(63): warning C4101: 'e': unreferenced local variable
+     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(118): warning C4101: 'e': unreferenced local variable
        Link:
          C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\Silas Grossberndt\Documents\Visual Studio 2015\Projects\SCT_analysis\Debug\SCT_analysis.exe" /INCREMENTAL /NOLOGO /LIBPATH:C:\root_v5.34.36\lib libhist.lib libTree.lib libGPad.lib libRIO.lib libHistpainter.lib libCore.lib libGraf.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /Debug /PDB:"C:\Users\Silas Grossberndt\Documents\Visual Studio 2015\Projects\SCT_analysis\Debug\SCT_analysis.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\Silas Grossberndt\Documents\Visual Studio 2015\Projects\SCT_analysis\Debug\SCT_analysis.lib" /MACHINE:X86 Debug\SCT_analysis.obj
          Debug\stdafx.obj
@@ -20,4 +18,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:01.37
+Time Elapsed 00:00:04.73
