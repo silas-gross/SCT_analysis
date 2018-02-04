@@ -11,8 +11,10 @@
 #include <vector>
 #include <iostream>
 #include <sstream>
-
-void scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_code)
+#include "C:/root_v5.34.36/include/TCanvas.h"
+#include "C:/root_v5.34.36/include/TLegend.h"
+std::vector <TH1F*> PAall, PDall;
+void scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_code, bool aon)
 {
 	std::string readout="";
 	int wc = 0, line = 0, tline = 0;
@@ -87,7 +89,7 @@ void scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_cod
 		if (wc == 0 && hasread == true || inf->eof())esccondition = false;
 	}
 	std::cout << " \n Having escaped the carven of the terrible while loop, our hero travels forth" << std::endl;
-	hists.push_back(new TH1F("vd", "Voltage in Digital Channel; Time (s); Voltage (V)", vals.size(), 0, vals.size()));
+	hists.push_back(new TH1F("vd", "Voltage in Digital Channel; Time (s); Voltage (V)", vals.size(), 0, 10*vals.size()));
 	//std::cout << vals.at(0).size() << std::endl;
 	
 	for (int i = 0; i < vals.size()-1; i++) {
@@ -102,14 +104,14 @@ void scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_cod
 		continue; 
 		}
 	}
-	hists.push_back(new TH1F("id", "Current in Digital Channel; Time (s); Current (mA)", vals.size(), 0, vals.size()));
+	hists.push_back(new TH1F("id", "Current in Digital Channel; Time (s); Current (mA)", vals.size(), 0, 10*vals.size()));
 	for (int i = 0; i < vals.size() - 1; i++) {
 		try { hists.at(1)->SetBinContent(i, 1000 * vals.at(i).at(2)); }
 		catch (...) {
 			continue;
 		}
 	}
-	hists.push_back(new TH1F("pd", "Power in Digital Channel; Time (s); Power(mW)", vals.size(), 0, vals.size()));
+	hists.push_back(new TH1F("pd", "Power in Digital Channel; Time (s); Power(mW)", vals.size(), 0, 10*vals.size()));
 	for (int i = 0; i < vals.size(); i++) {
 		try {
 			//vals.at(i).at(0) = vals.at(i).at(0) - vals.at(0).at(0);
@@ -117,9 +119,44 @@ void scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_cod
 		}
 		catch (std::exception& e) { continue; }
 	}
+	if (aon = true) {
+		hists.push_back(new TH1F("va", "Voltage in Analog Channel; Time (s); Voltage (V)", vals.size(), 0, 10 * vals.size()));
+		//std::cout << vals.at(0).size() << std::endl;
+
+		for (int i = 0; i < vals.size() - 1; i++) {
+			try {
+				vals.at(i).at(0) = vals.at(i).at(0) - vals.at(0).at(0);
+				std::cout << " \r Time of envent is at " << vals.at(i).at(0) << "seconds from start" << std::flush;
+				hists.at(3)->SetBinContent(i, vals.at(i).at(3));
+				//std::cout << vals.at(0).at(i) << std::endl;
+			}
+
+			catch (std::exception& e) {
+				std::cout << " \n Error in element " << i << "of type " << e.what() << std::endl;
+				continue;
+			}
+		}
+		hists.push_back(new TH1F("ia", "Current in Analog Channel; Time (s); Current (mA)", vals.size(), 0, 10 * vals.size()));
+		for (int i = 0; i < vals.size() - 1; i++) {
+			try { hists.at(4)->SetBinContent(i, 1000 * vals.at(i).at(4)); }
+			catch (...) {
+				continue;
+			}
+		}
+		hists.push_back(new TH1F("pa", "Power in Analog Channel; Time (s); Power(mW)", vals.size(), 0, 10 * vals.size()));
+		for (int i = 0; i < vals.size(); i++) {
+			try {
+				//vals.at(i).at(0) = vals.at(i).at(0) - vals.at(0).at(0);
+				hists.at(5)->SetBinContent(i, vals.at(i).at(3)*vals.at(i).at(4) * 1000);
+			}
+			catch (std::exception& e) { continue; }
+		}
+	}
 	for (int i = 0; i < hists.size(); i++) hists.at(i)->Write();
+	PAall.push_back(hists.at(5));
+	PDall.push_back(hists.at(2));
 	std::cout << "Done" << std::endl;
-	f->Write();
+//	f->Write();
 	f->Close();
 }
 
@@ -131,7 +168,7 @@ void scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_cod
 	fstream log_file;
 	 //get the dat file
 	std::vector <TFile*> files;
-	std::string fnames[4], t[4]; //time needs to be the time of the run
+	std::string fnames[8], t[8]; //time needs to be the time of the run
 	int bn[4];
 	fnames[0] = "119";
 	fnames[1] = "125";
@@ -141,17 +178,76 @@ void scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_cod
 	t[2] = "Jan 30 11";
 	t[1] = "Jan 29 17";
 	t[0] = "Jan 29 16:27";
-	for (int i = 0; i < 4; i++)
+	t[6] = "Jan 31 15:36";
+	t[5] = "Jan 31 15:26";
+	t[7] = "Jan 31 15:11";
+	t[4] = "Jan 31 15:03";
+	for (int i = 0; i < 4; i++) {
+		bn[i] = std::stoi(fnames[i]);
+		fnames[4 + i] = fnames[i] + "_run_2";
+	}
+	for (int i = 0; i < 8; i++)
 	{
 		log_file.open("C:/Users/Silas Grossberndt/Documents/ABC_Boards/TIDLogTesting.dat"); //to reset the read code each time
 		std::cout << "Starting with board number " << fnames[i] << std::endl; 
-		bn[i] = std::stoi(fnames[i]);
+	//	bn[i] = std::stoi(fnames[i]);
 	//	t[i] = "#** Start session " + t[i] + "**";
-		fnames[i] = "boardnumber_" + fnames[i]+".root";
-		files.push_back(new TFile(fnames[i].c_str(), "RECREATE"));
-		scan_dat_file(&log_file, files.at(i), bn[i], t[i]);
+		std::string ftnames = "boardnumber_" + fnames[i]+".root";
+		files.push_back(new TFile(ftnames.c_str(), "RECREATE"));
+		if (i<4) scan_dat_file(&log_file, files.at(i), bn[i%4], t[i], true);
+		if (i >=4) scan_dat_file(&log_file, files.at(i), bn[i % 4], t[i], true);
 		log_file.close();
 	}
+	TFile* f = new TFile("power_consumption.root", "Recreate");
+	for (int i = 0; i < 8; i++) {
+		std::string ahname, dhname, titles;
+		ahname = fnames[i] + "pa";
+
+		dhname = fnames[i] + "pd";
+		PAall.at(i)->SetName(ahname.c_str());
+		PDall.at(i)->SetTitle(titles.c_str());
+		PDall.at(i)->SetName(dhname.c_str());
+		PDall.at(i)->GetYaxis()->SetRangeUser(40, 60);
+		PAall.at(i)->GetYaxis()->SetRangeUser(10, 100);
+		PDall.at(i)->SetLineColor(i);
+		PAall.at(i)->SetLineColor(i);
+		PDall.at(i)->SetStats(false);
+		PAall.at(i)->SetStats(false);
+		PAall.at(i)->Write();
+		PDall.at(i)->Write();
+	}
+	TCanvas* c1 = new TCanvas();
+	TLegend* l = new TLegend(0.7, 0.95, 0.95, 0.7);
+	TCanvas* c2 = new TCanvas();
+	c1->cd();
+	//c1->SetLogy();
+	c2->SetLogy();
+	c1->SetLogx();
+	c2->SetLogx();
+	for (int i = 0; i < PDall.size(); i++) {
+		PDall.at(i)->Draw("same ][");
+		int b = bn[i % 4];
+		std::string titles = "Power Consumption on Module " + std::to_string(b);
+		PDall.at(i)->SetTitle(titles.c_str());
+		l->AddEntry(PDall.at(i) );
+	}
+	l->Draw("same");
+	c2->cd();
+	TLegend* l1 = new TLegend(0.7, 0.95, 0.95, 0.7);
+	for (int i = 0; i < PAall.size(); i++)
+	{
+		PAall.at(i)->Draw("same ][");
+		int b = bn[i % 4];
+		std::string titles = "Power Consumption on Module " + std::to_string(b);
+		PAall.at(i)->SetTitle(titles.c_str());
+		l1->AddEntry(PAall.at(i));
+	}
+	l1->Draw("same");
+	c1->Print("Digital_powers.pdf");
+	c2->Print("Analog_powers.pdf");
+	c1->Write();
+	c2->Write();
+	f->Write();
 	//exit behavior poorly defined--this is causing issues with the exit behavior of board 23, I am trying to fix this by specifing the timing
 
 
