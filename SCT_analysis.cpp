@@ -13,7 +13,10 @@
 #include <sstream>
 #include "C:/root_v5.34.36/include/TCanvas.h"
 #include "C:/root_v5.34.36/include/TLegend.h"
+#include "C:/root_v5.34.36/include/TGraph.h"
+#include "C:/root_v5.34.36/include/TVectorF.h"
 std::vector <TH1F*> PAall, PDall;
+std::vector <TGraph*> tempgraphs;
 void scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_code, bool aon)
 {
 	std::string readout="";
@@ -23,12 +26,12 @@ void scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_cod
 	std::vector <TH1F*> hists;
 	std::vector <std::vector <float> > vals;
 	std::vector <float> lvec;
-	fstream err;
-	err.open("error_file.txt");
+	//fstream err;
+	//err.open("error_file.txt");
 	//vals.resize(11);
 	//std::vector <float> vd, t, id, va, ia, vdraw, vdreg, varaw, vareg, mgnd, T;
 	bool esccondition = inf->is_open();
-	std::cout << "Ready to begin looping, Start Signal is " <<time_code << std::endl;
+	//std::cout << "Ready to begin looping, Start Signal is " <<time_code << std::endl;
 	while (esccondition) {
 		while (std::getline(*inf, readout))
 		{
@@ -38,7 +41,7 @@ void scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_cod
 			if (readout.find(time_code)!=std::string::npos) {
 				wc = 1;
 				hasread = true;
-				std::cout << "Now in data taking mode" <<"\n Start signal " <<time_code <<" sent" <<"\n This is same as " <<readout <<std::endl;
+				//std::cout << "Now in data taking mode" <<"\n Start signal " <<time_code <<" sent" <<"\n This is same as " <<readout <<std::endl;
 			}
 			if (readout.find("Start")!=std::string::npos && readout.find(time_code)==std::string::npos) wc = 0;
 			//while (wc == 0) std::cout << "Still looking for start signal" << std::endl;
@@ -100,7 +103,7 @@ void scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_cod
 			//std::cout << vals.at(0).at(i) << std::endl;
 		}
 
-		catch (std::exception& e) { std::cout << " \n Error in element " <<i  <<"of type " <<e.what()<< std::endl; 
+		catch (std::exception& e) { //std::cout << " \n Error in element " <<i  <<"of type " <<e.what()<< std::endl; 
 		continue; 
 		}
 	}
@@ -132,7 +135,7 @@ void scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_cod
 			}
 
 			catch (std::exception& e) {
-				std::cout << " \n Error in element " << i << "of type " << e.what() << std::endl;
+				//std::cout << " \n Error in element " << i << "of type " << e.what() << std::endl;
 				continue;
 			}
 		}
@@ -152,12 +155,40 @@ void scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_cod
 			catch (std::exception& e) { continue; }
 		}
 	}
+	int index = vals.size();
+	TVectorF T(index),  C(index), V(index);
+	int j = 0;
+	for (int i = 0; i < vals.size(); i++) {
+		try {
+			if (vals.at(i).at(10) <= 0) { //checks for faulty Temperatures and discards them
+				continue;
+			}
+			T[j]=vals.at(i).at(10); //use of j to avoid holes in the vector while parsing
+			C[j] = vals.at(i).at(2);
+			V[j] = vals.at(i).at(1);
+			j++;
+			
+		}
+		catch (std::exception& e) { std::cout <<'r'<< e.what() << std::flush; 
+		continue;  //should not throw an exception, but getting out of range errors sill on vals
+		}
+	}
+	tempgraphs.push_back(new TGraph(C, T)); //creates current graphs
+	std::cout << "\n Temp is: " << T[index / 2] << " C on the chip" << std::endl;
+	tempgraphs.push_back(new TGraph(V, T));
 	for (int i = 0; i < hists.size(); i++) hists.at(i)->Write();
-	PAall.push_back(hists.at(5));
-	PDall.push_back(hists.at(2));
-	std::cout << "Done" << std::endl;
+	//***NOTE: PD & PA have older variable names from attempting to plot Powers instead of currents, Too lazy to change ***
+	PAall.push_back(hists.at(4)); //analog current 
+	PDall.push_back(hists.at(1)); //Digital current
+	std::cout << "\n" <<tempgraphs.size() <<" Temperature Graphs recorded" << std::endl; //sanity check
 //	f->Write();
 	f->Close();
+	T.Delete();
+	C.Delete();
+	V.Delete();
+	columns.~vector();
+	vals.~vector(); 
+	//get rid of memory leak possiblity 
 }
 
 
@@ -198,7 +229,7 @@ void scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_cod
 		if (i >=4) scan_dat_file(&log_file, files.at(i), bn[i % 4], t[i], true);
 		log_file.close();
 	}
-	TFile* f = new TFile("power_consumption.root", "Recreate");
+	TFile* f = new TFile("current.root", "Recreate");
 	for (int i = 0; i < 8; i++) {
 		std::string ahname, dhname, titles;
 		ahname = fnames[i] + "pa";
@@ -207,8 +238,8 @@ void scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_cod
 		PAall.at(i)->SetName(ahname.c_str());
 		PDall.at(i)->SetTitle(titles.c_str());
 		PDall.at(i)->SetName(dhname.c_str());
-		PDall.at(i)->GetYaxis()->SetRangeUser(40, 60);
-		PAall.at(i)->GetYaxis()->SetRangeUser(10, 100);
+		PDall.at(i)->GetYaxis()->SetRangeUser(0, 60);
+		PAall.at(i)->GetYaxis()->SetRangeUser(0, 100);
 		PDall.at(i)->SetLineColor(i);
 		PAall.at(i)->SetLineColor(i);
 		PDall.at(i)->SetStats(false);
@@ -221,32 +252,94 @@ void scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_cod
 	TCanvas* c2 = new TCanvas();
 	c1->cd();
 	//c1->SetLogy();
-	c2->SetLogy();
+	//c2->SetLogy();
 	c1->SetLogx();
 	c2->SetLogx();
 	for (int i = 0; i < PDall.size(); i++) {
-		PDall.at(i)->Draw("same ][");
+		//PDall.at(i)->Draw("same ][");
 		int b = bn[i % 4];
-		std::string titles = "Power Consumption on Module " + std::to_string(b);
+		std::string titles = "Current on chip " + std::to_string(b);
 		PDall.at(i)->SetTitle(titles.c_str());
 		l->AddEntry(PDall.at(i) );
+		PDall.at(i)->SetTitle("TID Digital Current Measurement");
+		PDall.at(i)->Draw("same ][");
 	}
 	l->Draw("same");
 	c2->cd();
 	TLegend* l1 = new TLegend(0.7, 0.95, 0.95, 0.7);
-	for (int i = 0; i < PAall.size(); i++)
+	for (int i = 4; i < PAall.size(); i++)
 	{
-		PAall.at(i)->Draw("same ][");
+		//PAall.at(i)->Draw("same ][");
 		int b = bn[i % 4];
-		std::string titles = "Power Consumption on Module " + std::to_string(b);
+		std::string titles = "Current on Chip " + std::to_string(b);
 		PAall.at(i)->SetTitle(titles.c_str());
 		l1->AddEntry(PAall.at(i));
+		PAall.at(i)->SetTitle("TID Analog Current Measurement");
+		PAall.at(i)->Draw("same ][");
 	}
 	l1->Draw("same");
-	c1->Print("Digital_powers.pdf");
-	c2->Print("Analog_powers.pdf");
+	c1->Print("Digital_powers.png");
+	c2->Print("Analog_powers.png");
 	c1->Write();
 	c2->Write();
+	TCanvas* c3 = new TCanvas();
+	TCanvas *c4 = new TCanvas();
+	c3->cd();
+	ofstream erl;
+	erl.open("erl.txt");
+	TLegend *ct=new TLegend(0.7, 0.95, 0.9, 0.7), *vt=new TLegend(0.7, 0.95, 0.9, 0.7);
+	erl << tempgraphs.size() << std::endl;
+	for (int i = 0; i < tempgraphs.size(); i++) {
+		tempgraphs.at(i)->GetYaxis()->SetRangeUser(20, 22);
+		if (i % 2 == 0) {
+			c3->cd();
+
+			tempgraphs.at(i)->SetName((std::to_string(bn[(i / 2) % 4]) + "c").c_str());
+			tempgraphs.at(i)->SetTitle( ("Chip " + std::to_string(bn[(i / 2) % 4])).c_str());
+			tempgraphs.at(i)->SetLineColor((i+1)/2);
+			tempgraphs.at(i)->SetMarkerColor((i+1)/2);
+			ct->AddEntry(tempgraphs.at(i));
+			if (i == 2) {
+				for (int j = 0; j < 200; j++) {
+					float test = PDall.at(i)->GetBinContent(j);
+					erl <<test <<" to deg "<< tempgraphs.at(i)->Eval(test) << std::endl;
+				}
+			}
+			tempgraphs.at(i)->GetXaxis()->SetTitle("Current (mA)");
+			tempgraphs.at(i)->GetXaxis()->SetRangeUser(0.03, 0.05);
+			tempgraphs.at(i)->GetYaxis()->SetTitle("Temperature (C)");
+			tempgraphs.at(i)->SetTitle("Current versus Temperature");
+			if (i == 0) tempgraphs.at(i)->Draw("AC*");
+			tempgraphs.at(i)->Draw("same *");
+			tempgraphs.at(i)->Write();
+		}
+		else { 
+			c4->cd();
+			tempgraphs.at(i)->SetName((std::to_string(bn[(i / 2) % 4]) + "v").c_str());
+			tempgraphs.at(i)->SetTitle(("Chip " + std::to_string(bn[(i / 2) % 4])).c_str());
+			tempgraphs.at(i)->SetLineColor((i+1) / 2);
+			tempgraphs.at(i)->SetMarkerColor((i+1) / 2);
+			tempgraphs.at(i)->GetXaxis()->SetRangeUser(1.5, 1.6);
+			vt->AddEntry(tempgraphs.at(i));
+			tempgraphs.at(i)->GetXaxis()->SetTitle("Voltage (mV)");
+			tempgraphs.at(i)->GetYaxis()->SetTitle("Temperature (C)");
+			tempgraphs.at(i)->SetTitle("Voltage versus Temperature");
+			if (i==1) tempgraphs.at(i)->Draw("A*");
+			tempgraphs.at(i)->Draw("same *");
+			tempgraphs.at(i)->Write();
+		}
+
+	}
+	c3->cd();
+	ct->Draw("same");
+	c4->cd();
+	vt->Draw("same");
+	c3->Write();
+	c4->Write();
+	//c3->Print("TV.pdf[");
+	c3->Print("TC.png");
+	c4->Print("TV.png");
+	//c4->Print("TV.pdf]");
 	f->Write();
 	//exit behavior poorly defined--this is causing issues with the exit behavior of board 23, I am trying to fix this by specifing the timing
 
