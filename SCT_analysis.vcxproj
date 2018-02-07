@@ -94,7 +94,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>C:\root_v5.34.36\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>libhist.lib;libTree.lib;libGPad.lib;libRIO.lib;libHistpainter.lib;libCore.lib;libGraf.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libhist.lib;libTree.lib;libGPad.lib;libRIO.lib;libHistpainter.lib;libCore.lib;libGraf.lib;vectorDict.lib;libMatrix.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
