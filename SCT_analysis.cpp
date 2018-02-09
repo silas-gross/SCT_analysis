@@ -17,7 +17,17 @@
 #include "C:/root_v5.34.36/include/TVectorF.h"
 std::vector <TH1F*> PAall, PDall;
 std::vector <TGraph*> tempgraphs;
-void scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_code, bool aon)
+std::vector<float> average(std::vector<std::vector <float>> board_info) {
+	std::vector<float> sum, average;
+	sum.resize(board_info.at(1).size());
+	for (int i = 0; i < board_info.size(); i++) {
+		for (int j = 0; j < board_info.at(i).size(); j++) sum.at(j) += board_info.at(i).at(j);
+	}
+	average.resize(board_info.at(1).size());
+	for (int i = 0; i < sum.size(); i++) average.at(i) = sum.at(i) / board_info.size();
+	return average;
+}
+std::vector<float> scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_code, bool aon)
 {
 	std::string readout="";
 	int wc = 0, line = 0, tline = 0;
@@ -28,15 +38,12 @@ void scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_cod
 	std::vector <float> lvec;
 	//fstream err;
 	//err.open("error_file.txt");
-	//vals.resize(11);
-	//std::vector <float> vd, t, id, va, ia, vdraw, vdreg, varaw, vareg, mgnd, T;
 	bool esccondition = inf->is_open();
 	//std::cout << "Ready to begin looping, Start Signal is " <<time_code << std::endl;
 	while (esccondition) {
 		while (std::getline(*inf, readout))
 		{
 			tline++;
-			//std::cout << tline << std::endl;
 			if(readout.compare(time_code) != 0) std::cout <<'\r' << "Looking for value at line " << tline << std::flush;
 			if (readout.find(time_code)!=std::string::npos) {
 				wc = 1;
@@ -50,10 +57,6 @@ void scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_cod
 				
 				//if (readout == "") continue;
 				line++;
-				//std::cout << line << std::endl;
-				//for (int i = 0; i < 11; i++) vals.at(i).resize(line);
-				//std::cout << vals.size() << std::endl;
-				//std::string sline = line.itos();
 				columns.clear();
 				std::istringstream temp(readout);
 				std::string temp2;
@@ -186,9 +189,11 @@ void scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_cod
 	T.Delete();
 	C.Delete();
 	V.Delete();
+	std::vector<float> averages = average(vals);
 	columns.~vector();
 	vals.~vector(); 
 	//get rid of memory leak possiblity 
+	return averages;
 }
 
 
@@ -196,27 +201,74 @@ void scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_cod
 
 	int main()
 {
-	fstream log_file;
+	fstream log_file, time_file;
 	 //get the dat file
 	std::vector <TFile*> files;
-	std::string fnames[8], t[8]; //time needs to be the time of the run
+	std::vector<std::string> fnames, t; //time needs to be the time of the run
 	int bn[4];
-	fnames[0] = "119";
-	fnames[1] = "125";
-	fnames[2] = "107";
-	fnames[3] = "23";
-	t[3] = "Jan 30 14:02"; //the actual time code is not working with str::find, have to pay closer attention to the limit cases??
+	std::string board_s;
+	time_file.open("runlog.txt");
+	while (!time_file.eof())
+	{
+		std::string logbook;
+		int i = 0;
+		while (getline(time_file, logbook)) {
+			if (logbook.find("Board") != std::string::npos) {
+				std::string temp_s;
+				std::cout << "Found First board" << std::endl;
+				std::istringstream logbook_t(logbook);
+				while (std::getline(logbook_t, temp_s, ' ')) {
+					try {
+						std::stoi(temp_s);
+						board_s = logbook;
+						i = 1;
+						std::cout << temp_s << std::endl;
+					}
+					catch (std::exception& e) { continue; }
+				}
+			}
+			else {
+				std::string temp_s;
+				std::istringstream logbook_t(logbook);
+				while (std::getline(logbook_t, temp_s, ' ')) {
+					try {
+						
+						if (logbook.find("Board")!=std::string::npos ) continue;
+						t.push_back(logbook);
+						int j = t.size();
+						try { std::stoi(t.at(j).c_str()); }
+						catch (std::exception&e) {
+							std::cout << logbook << std::endl;
+							fnames.push_back(board_s + "_run_" + std::to_string(i));
+						}
+					}
+					catch (std::exception& e) {
+						continue;
+					}
+				}
+			}
+		}
+	}
+		time_file.close();
+/*	t[3] = "Jan 30 14:02"; //the actual time code is not working with str::find, have to pay closer attention to the limit cases??
 	t[2] = "Jan 30 11";
 	t[1] = "Jan 29 17";
 	t[0] = "Jan 29 16:27";
 	t[6] = "Jan 31 15:36";
 	t[5] = "Jan 31 15:26";
 	t[7] = "Jan 31 15:11";
-	t[4] = "Jan 31 15:03";
-	for (int i = 0; i < 4; i++) {
-		bn[i] = std::stoi(fnames[i]);
-		fnames[4 + i] = fnames[i] + "_run_2";
-	}
+	t[4] = "Jan 31 15:03";*/
+
+		for (int i = 0, j = 0; i < fnames.size(); i++) {
+			try {
+				bn[j] = std::stoi(fnames[i]);
+				j++;
+				//fnames[4 + i] = fnames[i] + "_run_2";
+			}
+			catch (std::exception& e) {
+				continue;
+			}
+		}
 	for (int i = 0; i < 8; i++)
 	{
 		log_file.open("C:/Users/Silas Grossberndt/Documents/ABC_Boards/TIDLogTesting.dat"); //to reset the read code each time
@@ -225,8 +277,8 @@ void scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_cod
 	//	t[i] = "#** Start session " + t[i] + "**";
 		std::string ftnames = "boardnumber_" + fnames[i]+".root";
 		files.push_back(new TFile(ftnames.c_str(), "RECREATE"));
-		if (i<4) scan_dat_file(&log_file, files.at(i), bn[i%4], t[i], true);
-		if (i >=4) scan_dat_file(&log_file, files.at(i), bn[i % 4], t[i], true);
+		if (i<4) scan_dat_file(&log_file, files.at(i), bn[i%4], t.at(i), false);
+		if (i >=4) scan_dat_file(&log_file, files.at(i), bn[i % 4], t.at(i), true);
 		log_file.close();
 	}
 	TFile* f = new TFile("current.root", "Recreate");
