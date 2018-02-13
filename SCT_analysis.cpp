@@ -17,9 +17,34 @@
 #include "C:/root_v5.34.36/include/TVectorF.h"
 std::vector <TH1F*> PAall, PDall;
 std::vector <TGraph*> tempgraphs;
-void scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_code, bool aon)
+//std::vector <std::vector <TH1F*>> Avg_hists;
+std::vector<std::vector<float>> time_averging(std::vector<std::vector<float>> data)
 {
-	std::string readout="";
+	std::vector<float> ta_vd, ta_va, ta_ad, ta_aa;
+	float vd=0, va=0, ad=0, aa=0;
+	for (int i = 0; i < data.size(); i++)
+	{
+		vd += data.at(i).at(1);
+		va += data.at(i).at(3);
+		ad += data.at(i).at(2);
+		aa += data.at(i).at(4);
+		if (i % 6 == true) {
+			ta_vd.push_back(vd / 6);
+			ta_va.push_back(va / 6);
+			ta_ad.push_back(ad / 6);
+			ta_aa.push_back(aa / 6);
+		}
+	}
+	std::vector <std::vector<float>> avgs (4);
+	avgs.at(0) = ta_vd;
+	avgs.at(1) = ta_ad; 
+	avgs.at(2) = ta_va;
+	avgs.at(3) = ta_vd;
+	return avgs;
+}
+void scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_code, bool aon, std::vector<TH1F*> avg_hists, bool lastof, int rn)
+{
+	std::string readout = "";
 	int wc = 0, line = 0, tline = 0;
 	bool hasread = false;
 	std::vector <std::string> columns;
@@ -37,17 +62,17 @@ void scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_cod
 		{
 			tline++;
 			//std::cout << tline << std::endl;
-			if(readout.compare(time_code) != 0) std::cout <<'\r' << "Looking for value at line " << tline << std::flush;
-			if (readout.find(time_code)!=std::string::npos) {
+			if (readout.find(time_code.c_str()) == std::string::npos) std::cout << '\r' << "Looking for value at line " << tline << std::flush;
+			if (readout.find(time_code.c_str()) != std::string::npos) {
 				wc = 1;
 				hasread = true;
-				//std::cout << "Now in data taking mode" <<"\n Start signal " <<time_code <<" sent" <<"\n This is same as " <<readout <<std::endl;
+				//std::cout << "Now in data taking mode" << "\n Start signal " << time_code << " sent" << "\n This is same as " << readout << std::endl;
 			}
-			if (readout.find("Start")!=std::string::npos && readout.find(time_code)==std::string::npos) wc = 0;
+			if (readout.find("Start") != std::string::npos && readout.find(time_code.c_str()) == std::string::npos) wc = 0;
 			//while (wc == 0) std::cout << "Still looking for start signal" << std::endl;
-			if (wc == 1 )//&& readout.compare(time_code)==0 && readout.compare( "#** t(s),v0Mon(V),i0Mon(mA),v1Mon(V),i1Mon(mA),VDDA_RAW(mV),VDDA_REG(mV),VDDD_RAW(mV),VDDD_REG(mV),MOD_GND(mV),Temperature(C),IrradStatus(On = 1),DoseRate(kRad/hr),TotalDose(MRad) **")==0 && readout.compare("#** -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- **")==0)
+			if (wc == 1)//&& readout.compare(time_code)==0 && readout.compare( "#** t(s),v0Mon(V),i0Mon(mA),v1Mon(V),i1Mon(mA),VDDA_RAW(mV),VDDA_REG(mV),VDDD_RAW(mV),VDDD_REG(mV),MOD_GND(mV),Temperature(C),IrradStatus(On = 1),DoseRate(kRad/hr),TotalDose(MRad) **")==0 && readout.compare("#** -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- **")==0)
 			{
-				
+
 				//if (readout == "") continue;
 				line++;
 				//std::cout << line << std::endl;
@@ -62,40 +87,41 @@ void scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_cod
 				for (int i = 0; i < columns.size(); i++) {
 					//std::cout << columns.at(i) << std::endl;
 					try {
-							lvec.push_back(std::stof(columns.at(i).c_str()));
-							//std::cout << lvec.at(i) << std::endl;
-						}
+						lvec.push_back(std::stof(columns.at(i).c_str()));
+						//std::cout << lvec.at(i) << std::endl;
+					}
 					catch (const std::exception& e) {
 						continue;
 						//std::cout << columns.at(i) << std::endl;
 					}
-					 //std::cout << "error on line " <<line <<std::endl; }
+					//std::cout << "error on line " <<line <<std::endl; }
 				}
 				if (lvec.size() == 0 || columns.size() == 0) {
-				//	std::cout << "vectors unfilled on line " << line <<"\n line reads " <<readout << std::endl;
+					//	std::cout << "vectors unfilled on line " << line <<"\n line reads " <<readout << std::endl;
 					continue;
 				}
 				vals.push_back(lvec);
-				 /*try { float a = lvec.at(0); }
-				catch (std::exception& e) {
-					if (line == 200) { std::cout << e.what() << " on line " << line << "\n which reads " << readout << std::endl; }
-				}//having this line in causes the columns request to fail....why???????*/
+				/*try { float a = lvec.at(0); }
+			   catch (std::exception& e) {
+				   if (line == 200) { std::cout << e.what() << " on line " << line << "\n which reads " << readout << std::endl; }
+			   }//having this line in causes the columns request to fail....why???????*/
 				lvec.clear();
 				//std::cout << vals.size() << std::endl;
-				
-			}
-			if(wc==0) continue;
 
-			//std::cout << vals.at(2).size() << std::endl; //having this line in causes the columns request to fail....why???????
-		
+			}
+			//			if(wc==0) continue;
+
+						//std::cout << vals.at(2).size() << std::endl; //having this line in causes the columns request to fail....why???????
+
+
+			if (wc == 0 && hasread == true || inf->eof())esccondition = false;
 		}
-		if (wc == 0 && hasread == true || inf->eof())esccondition = false;
 	}
 	std::cout << " \n Having escaped the carven of the terrible while loop, our hero travels forth" << std::endl;
-	hists.push_back(new TH1F("vd", "Voltage in Digital Channel; Time (s); Voltage (V)", vals.size(), 0, 10*vals.size()));
+	hists.push_back(new TH1F(("vd" + std::to_string(rn)).c_str(), "Voltage in Digital Channel; Time (s); Voltage (V)", vals.size(), 0, 10 * vals.size()));
 	//std::cout << vals.at(0).size() << std::endl;
-	
-	for (int i = 0; i < vals.size()-1; i++) {
+
+	for (int i = 0; i < vals.size() - 1; i++) {
 		try {
 			vals.at(i).at(0) = vals.at(i).at(0) - vals.at(0).at(0);
 			std::cout << " \r Time of envent is at " << vals.at(i).at(0) << "seconds from start" << std::flush;
@@ -104,17 +130,17 @@ void scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_cod
 		}
 
 		catch (std::exception& e) { //std::cout << " \n Error in element " <<i  <<"of type " <<e.what()<< std::endl; 
-		continue; 
+			continue;
 		}
 	}
-	hists.push_back(new TH1F("id", "Current in Digital Channel; Time (s); Current (mA)", vals.size(), 0, 10*vals.size()));
+	hists.push_back(new TH1F(("id" + std::to_string(rn)).c_str(), "Current in Digital Channel; Time (s); Current (mA)", vals.size(), 0, 10 * vals.size()));
 	for (int i = 0; i < vals.size() - 1; i++) {
 		try { hists.at(1)->SetBinContent(i, 1000 * vals.at(i).at(2)); }
 		catch (...) {
 			continue;
 		}
 	}
-	hists.push_back(new TH1F("pd", "Power in Digital Channel; Time (s); Power(mW)", vals.size(), 0, 10*vals.size()));
+	hists.push_back(new TH1F(("pd" + std::to_string(rn)).c_str(), "Power in Digital Channel; Time (s); Power(mW)", vals.size(), 0, 10 * vals.size()));
 	for (int i = 0; i < vals.size(); i++) {
 		try {
 			//vals.at(i).at(0) = vals.at(i).at(0) - vals.at(0).at(0);
@@ -156,21 +182,22 @@ void scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_cod
 		}
 	}
 	int index = vals.size();
-	TVectorF T(index),  C(index), V(index);
+	TVectorF T(index), C(index), V(index);
 	int j = 0;
 	for (int i = 0; i < vals.size(); i++) {
 		try {
 			if (vals.at(i).at(10) <= 0) { //checks for faulty Temperatures and discards them
 				continue;
 			}
-			T[j]=vals.at(i).at(10); //use of j to avoid holes in the vector while parsing
+			T[j] = vals.at(i).at(10); //use of j to avoid holes in the vector while parsing
 			C[j] = vals.at(i).at(2);
 			V[j] = vals.at(i).at(1);
 			j++;
-			
+
 		}
-		catch (std::exception& e) { std::cout <<'r'<< e.what() << std::flush; 
-		continue;  //should not throw an exception, but getting out of range errors sill on vals
+		catch (std::exception& e) {
+			std::cout << 'r' << e.what() << std::flush;
+			continue;  //should not throw an exception, but getting out of range errors sill on vals
 		}
 	}
 	tempgraphs.push_back(new TGraph(C, T)); //creates current graphs
@@ -180,14 +207,25 @@ void scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_cod
 	//***NOTE: PD & PA have older variable names from attempting to plot Powers instead of currents, Too lazy to change ***
 	PAall.push_back(hists.at(4)); //analog current 
 	PDall.push_back(hists.at(1)); //Digital current
-	std::cout << "\n" <<tempgraphs.size() <<" Temperature Graphs recorded" << std::endl; //sanity check
+	//std::cout << "\n" <<tempgraphs.size() <<" Temperature Graphs recorded" << std::endl; //sanity check
 //	f->Write();
-	f->Close();
+	//f->Close();
+	try{
+		std::vector<std::vector<float>> av = time_averging(vals);
+	for (int i = 0; i < avg_hists.size(); i++) {
+		for (int j = 0; j < av.at(i).size(); j++) avg_hists.at(i)->Fill(av.at(i).at(j));
+	}
+}
+	catch (std::exception& e) { std::cout << "Unable to perform time averaging on run " << rn << "\n Returned error " << e.what() << std::endl; }
 	T.Delete();
 	C.Delete();
 	V.Delete();
 	columns.~vector();
 	vals.~vector(); 
+	if (lastof) {
+		for (int i = 0; i < avg_hists.size(); i++) avg_hists.at(i)->Write();
+		avg_hists.~vector();
+	}
 	//get rid of memory leak possiblity 
 }
 
@@ -199,35 +237,89 @@ void scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_cod
 	fstream log_file;
 	 //get the dat file
 	std::vector <TFile*> files;
-	std::string fnames[8], t[8]; //time needs to be the time of the run
+	std::vector <std::string> t;
+	std::vector <std::string> fnames;
+	std::cout << "First vars loaded" << std::endl;
 	int bn[4];
-	fnames[0] = "119";
-	fnames[1] = "125";
-	fnames[2] = "107";
-	fnames[3] = "23";
-	t[3] = "Jan 30 14:02"; //the actual time code is not working with str::find, have to pay closer attention to the limit cases??
+	int nruns[4] = { 0,0,0,0 };
+	std::cout << "Second set" << std::endl;
+	//allows for more generalizability than using array
+	//std::string fnames[8], t[8]; //time needs to be the time of the run
+	//int bn[4];
+	//fnames[0] = "119";
+	//fnames[1] = "125";
+	//fnames[2] = "107";
+	//fnames[3] = "23";
+	/*t[3] = "Jan 30 14:02"; //the actual time code is not working with str::find, have to pay closer attention to the limit cases??
 	t[2] = "Jan 30 11";
 	t[1] = "Jan 29 17";
 	t[0] = "Jan 29 16:27";
 	t[6] = "Jan 31 15:36";
 	t[5] = "Jan 31 15:26";
 	t[7] = "Jan 31 15:11";
-	t[4] = "Jan 31 15:03";
-	for (int i = 0; i < 4; i++) {
-		bn[i] = std::stoi(fnames[i]);
-		fnames[4 + i] = fnames[i] + "_run_2";
+	t[4] = "Jan 31 15:03";*/
+	fstream runtimes;
+	std::string line; 
+	runtimes.open("runlog.txt");
+	int i = 0;
+	while( runtimes.is_open() && !runtimes.eof()) {
+		while (getline(runtimes, line)) {
+				//std::cout << line << std::endl;
+				if (line.find("End") != std::string::npos) runtimes.close();
+				if (line.find("#") != std::string::npos) {
+					std::istringstream templine(line);
+					std::string temp;
+					while (getline(templine, temp, ' ')) {
+						try {
+							stof(temp);
+							fnames.push_back(temp);
+							i++;
+						}
+						catch (std::exception& e) {
+							continue;
+						}
+					}
+				}
+				if(line.find("#")==std::string::npos ) {
+					if (i > 0) {
+						t.push_back(line);
+						//std::cout << line << std::endl;
+
+						nruns[i - 1]++;
+					}
+					else continue;
+				}
+				//if(line.find("Fil")) runtimes.close();
+			
+		}
 	}
-	for (int i = 0; i < 8; i++)
+	for (int i = 0; i < fnames.size(); i++) {
+		std::cout << fnames.at(i) << std::endl;
+		bn[i] = std::stoi(fnames[i]);
+		//fnames[4 + i] = fnames[i] + "_run_2";
+	}
+	for (int i = 0; i < fnames.size(); i++)
 	{
-		log_file.open("C:/Users/Silas Grossberndt/Documents/ABC_Boards/TIDLogTesting.dat"); //to reset the read code each time
+
 		std::cout << "Starting with board number " << fnames[i] << std::endl; 
 	//	bn[i] = std::stoi(fnames[i]);
 	//	t[i] = "#** Start session " + t[i] + "**";
 		std::string ftnames = "boardnumber_" + fnames[i]+".root";
 		files.push_back(new TFile(ftnames.c_str(), "RECREATE"));
-		if (i<4) scan_dat_file(&log_file, files.at(i), bn[i%4], t[i], true);
-		if (i >=4) scan_dat_file(&log_file, files.at(i), bn[i % 4], t[i], true);
-		log_file.close();
+		std::cout << nruns[i] << std::endl;
+		std::vector<TH1F*>avg_hists(4);
+		avg_hists.at(0) = new TH1F(("vd" + fnames[i]).c_str(), ("Average Voltages in Digital Channel on Board " + fnames[i] + "; Voltage averaged over 1 minute intervals (V)").c_str(), 20, 1.4, 1.6);
+		avg_hists.at(1) = new TH1F(("ad" + fnames[i]).c_str(), ("Average Curents in Digital Channel on Board " + fnames[i] + "; Current averaged over 1 minute intervals (mA)").c_str(), 20, 30, 34);
+		avg_hists.at(2) = new TH1F(("va" + fnames[i]).c_str(), ("Average Voltages in Analog Channel on Board " + fnames[i] + "; Voltage averaged over 1 minute intervals (V)").c_str(), 20, 1.4, 1.6);
+		avg_hists.at(3) = new TH1F(("aa" + fnames[i]).c_str(), ("Average Curents in Analog Channel on Board " + fnames[i] + "; Current averaged over 1 minute intervals (mA)").c_str(), 20, 30, 34);
+		for (int j = 0; j < nruns[i]; j++)
+		{
+			log_file.open("C:/Users/Silas Grossberndt/Documents/ABC_Boards/TIDLogTesting.dat"); //to reset the read code each time
+			bool lo = (j == nruns[i] - 1);
+			scan_dat_file(&log_file, files.at(i), bn[i], t.at(j), true, avg_hists, lo, j);
+			log_file.close();
+		}
+		files.at(i)->Close();
 	}
 	TFile* f = new TFile("current.root", "Recreate");
 	for (int i = 0; i < 8; i++) {
