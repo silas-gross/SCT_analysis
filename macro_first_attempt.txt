@@ -1,0 +1,80 @@
+#include <vector>
+#include <string>
+#include <TFile>
+#include <TTree>
+#include <iostream>
+#include <fstream>
+
+void patch_data_files_and_fix_irrad(std::string name_of_files_text, bool time_fix, bool fix_irad, std::string chip_number, int dose_rate, std::string irrad_f_s, int initial_dose)
+{
+	if(time_fix) patch_data_files_and_fix_irrad(name_of_files_text, chip_number);
+	if(fix_irad) fixirad(irrad_f_s, dose_rate, initial_dose, chip_number);
+} 
+void patch_data_files(std::string name_of_files_text, std::string chip_number){
+	ifstream files_to_read;
+
+	files_to_read.open(name_of_files_text.c_str()); //read the file containing the list of files to read
+	std::vector<std::string> filenames;
+	if(files_to_read.is_open()) std::getline(files_to_read, filenames.push_back()));
+	std::vector<ifstream> data_files; 
+	for(int i=0; i<filenames.size(); i++) data_files.pushback(open(filesnames.at(i).c_str()); //opens data file
+	std::string* line==NULL;
+	TFile* f=new TFile(("data_for_chip_"+chip_number+".root").c_str(), "RECREATE");
+	std::vector<std::vector<float>>data;
+	std::vector<std::sting> headers; //reads the names, makes sure that the right column is taken if in use
+	//std::thread t(data_read)
+	if(timefix){ //to skip those events with out temperature reading
+	for(int i=0; i<data_files.size(); i++){
+		if(!data_files.at(i).is_open() || data_files.at(i).eof()) continue;
+		while( std::getline(data_files.at(i), *line)){
+			std::istringstream templine(*line);
+			std::vector<float> sub_lines;
+			line->clear();
+			while(getline(templine, *line, ' ')){
+				try{ 
+					sub_lines.push_back(stof(*line));
+				}
+				catch(std::invalid_argument& a){  headers.push_back(*line);}
+				line->clear();
+			}
+			if(-pow(10, -5)<=sub_lines.at(10)<=pow(10, -5) || sublines.at(10)==0) continue;
+			data.push_back(sub_lines);
+			sub_lines.~vector();
+		}
+	}
+	std::vector<std::vector<float>> fdata (data.at(0).size())(data.size());
+	for(int i=0; i<data.size(); i++) {
+		for(int j=0; j<data.at(i).size(); j++) fdata.at(j).at(i)=data.at(i).at(j);
+	}
+	TTree* tree=new TTree(("data"+chip_number).c_str(), ("Data readout from chip "+chip_number).c_str())
+	for(int i=0; i<headers.size(); i++){
+		TBranch *b=tree->Branch(("var_number_"+std::to_string(i)).c_str(), (headers.at(i)).c_str(),  &fdata.at(i));
+		b->Fill();
+		}
+	tree->Write();
+	file->Close();
+}
+void fixirad(std::string irrad_f_s, int dose_rate, int initial_dose, std::string chip_number){
+	ifstream irrad_log.open(irrad_f_s.c_str())
+	std::vector<std::string> start_stop;
+	ofstream readout.open(("Chip_"+chip_number+"_fixing_readout.txt").c_str()); //to readout the TID on the Chip
+	getline(irrad_log, start_stop.push_back());
+	long time_irrad=0, start_t=0, TID;
+	for(int i=0; i<start_stop()-1; i++){
+		if(start_stop.at(i).find("Started")){
+			start_t=stoi(start_stop.at(i)); //takes the time code from the next line
+		}
+		if(start_stop.at(i).find("Ended") && start_t!=0){
+			time_irrad+=stoi(start_stop.at(i))-start_t; //reads the end of the timing
+			start_t=0;
+		}
+	}
+	TID=time_irrad*dose_rate+initial_dose; 
+	readout<<"Total Dose for Chip " <<chip_number <<": "<<TID <<std::endl;
+}
+
+}
+	
+			
+			
+			
