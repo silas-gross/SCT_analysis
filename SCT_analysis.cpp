@@ -17,46 +17,82 @@
 #include "C:/root_v5.34.36/include/TVectorF.h"
 std::vector <TH1F*> PAall, PDall;
 std::vector <TGraph*> tempgraphs;
-<<<<<<< HEAD
-//std::vector <std::vector <TH1F*>> Avg_hists;
-std::vector<std::vector<float>> time_averging(std::vector<std::vector<float>> data)
-=======
-std::vector<float> average(std::vector<std::vector <float>> board_info) {
-	std::vector<float> sum, average;
-	sum.resize(board_info.at(1).size());
-	for (int i = 0; i < board_info.size(); i++) {
-		for (int j = 0; j < board_info.at(i).size(); j++) sum.at(j) += board_info.at(i).at(j);
-	}
-	average.resize(board_info.at(1).size());
-	for (int i = 0; i < sum.size(); i++) average.at(i) = sum.at(i) / board_info.size();
-	return average;
-}
-std::vector<float> scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_code, bool aon)
->>>>>>> first_try_at_higher_function
+std::vector <TH1F*> avg_hists;
+std::vector<TH1F*> TempLoss(std::vector<std::vector<float>> data, std::string board_label, const long init_time)
 {
-	std::vector<float> ta_vd, ta_va, ta_ad, ta_aa;
-	float vd=0, va=0, ad=0, aa=0;
+	TH1F* Temp = new TH1F("temp", "temp", 100, 0, 20);
+	TH1F* Tloss = new TH1F((board_label + "_tloss").c_str(), ("Expected Temperature increase for chip " + board_label + " from initial; Temperature increase (K)").c_str(), 100, 0, 2);
+	TH1F* TGain = new TH1F((board_label + "_act_tloss" ).c_str(), ("Measured Temperature increase for chip " + board_label + "from initial; Teperature increase (K)").c_str(), 100, 0, 2);
+	TH1F* TDiff = new TH1F((board_label + "_diffs_of_loss").c_str(), ("Diffences of Temperature Increase approach for chip " + board_label + ";  Teperature increase (K)").c_str(), 100, 0, 2);
+	float tinit = data.at(1).at(10);
+	const float Ts = 20, hs = 10.88, A = 0.0075;
 	for (int i = 0; i < data.size(); i++)
 	{
+		//if (data.at(i).at(10) == 0) data.at(i).at(10) = 100;
+		float tdiff = data.at(i).at(10) - tinit;
+		float tmdiff = (data.at(i).at(1)*data.at(i).at(2) + data.at(i).at(3)*data.at(i).at(4)) / (A*hs) + Ts - tinit;
+		long time_spot = data.at(i).at(0) - init_time;
+		std::cout << "Temp diff measured " << tdiff << " K" << " versus what it actually is" <<data.at(i).at(10)<<std::endl;
+		time_spot = time_spot / 10;
+		float diffs = abs(tdiff - tmdiff);
+		Temp->Fill(data.at(i).at(10));
+		Tloss->Fill(tmdiff);
+		TGain->Fill(tdiff);
+		TDiff->Fill(diffs);
+	}
+	std::vector<TH1F*> Temps(4);
+	Temps.at(0) = Tloss;
+	Temps.at(1) = TGain;
+	Temps.at(2) = TDiff;
+	Temps.at(3) = Temp;
+	Tloss->Delete();
+	TGain->Delete();
+	//tinit->clear;
+	return Temps;
+}
+std::vector<std::vector<float>> time_averging(std::vector<std::vector<float>> data)
+{
+	std::vector<float> ta_vd, ta_va, ta_ad, ta_aa;
+	float vd=0, va=0, ad=0, aa=0, n=0;
+//	std::cout << "Input vector has size " << data.size() << " with " << data.at(0).size() << " columns" << std::endl;
+	for (int i = 0; i < data.size(); i++)
+	{
+		if (data.at(i).size() < 5)continue;
 		vd += data.at(i).at(1);
-		va += data.at(i).at(3);
+
 		ad += data.at(i).at(2);
-		aa += data.at(i).at(4);
+		try {
+			va += data.at(i).at(3);
+			aa += data.at(i).at(4);
+			n++;
+		}
+		catch (std::exception& e) {};
 		if (i % 6 == true) {
-			ta_vd.push_back(vd / 6);
-			ta_va.push_back(va / 6);
-			ta_ad.push_back(ad / 6);
-			ta_aa.push_back(aa / 6);
+			if (n != 0) {
+			ta_vd.push_back(vd / n);
+
+			ta_ad.push_back(ad / n);
+			
+				ta_va.push_back(va / n);
+				ta_aa.push_back(aa / n);
+
+			}
+			n = 0;
+			vd = 0;
+			va = 0;
+			aa = 0;
+			ad = 0;
 		}
 	}
 	std::vector <std::vector<float>> avgs (4);
 	avgs.at(0) = ta_vd;
-	avgs.at(1) = ta_ad; 
+	avgs.at(1) = ta_ad;
 	avgs.at(2) = ta_va;
-	avgs.at(3) = ta_vd;
+	avgs.at(3) = ta_aa;
+//	std::cout << "Readout vectors have size " << ta_vd.size() << std::endl;
 	return avgs;
 }
-void scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_code, bool aon, std::vector<TH1F*> avg_hists, bool lastof, int rn)
+int scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_code, bool aon, bool lastof, int rn, int lastline, std::vector<TH1F*> ttemps)
 {
 	std::string readout = "";
 	int wc = 0, line = 0, tline = 0;
@@ -67,30 +103,29 @@ void scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_cod
 	std::vector <float> lvec;
 	//fstream err;
 	//err.open("error_file.txt");
+	//vals.resize(11);
+	//std::vector <float> vd, t, id, va, ia, vdraw, vdreg, varaw, vareg, mgnd, T;
 	bool esccondition = inf->is_open();
 	//std::cout << "Ready to begin looping, Start Signal is " <<time_code << std::endl;
 	while (esccondition) {
 		while (std::getline(*inf, readout))
 		{
 			tline++;
-<<<<<<< HEAD
+			if (tline < lastline)continue;
 			//std::cout << tline << std::endl;
-			if (readout.find(time_code.c_str()) == std::string::npos) std::cout << '\r' << "Looking for value at line " << tline << std::flush;
+			if (readout.find(time_code.c_str()) == std::string::npos &&wc==0 &&hasread==0) std::cout << '\r' << "Looking for value at line " << tline << std::flush;
 			if (readout.find(time_code.c_str()) != std::string::npos) {
-=======
-			if(readout.compare(time_code) != 0) std::cout <<'\r' << "Looking for value at line " << tline << std::flush;
-			if (readout.find(time_code)!=std::string::npos) {
->>>>>>> first_try_at_higher_function
 				wc = 1;
 				hasread = true;
-				//std::cout << "Now in data taking mode" << "\n Start signal " << time_code << " sent" << "\n This is same as " << readout << std::endl;
+				std::cout << "\n Start signal " << time_code << " sent" << "\n Line is " <<tline <<"\n Line reads " <<readout << std::endl;
+				line = tline;
 			}
 			if (readout.find("Start") != std::string::npos && readout.find(time_code.c_str()) == std::string::npos) wc = 0;
 			//while (wc == 0) std::cout << "Still looking for start signal" << std::endl;
+			//if (hasread && !wc) esccondition = 0;
 			if (wc == 1)//&& readout.compare(time_code)==0 && readout.compare( "#** t(s),v0Mon(V),i0Mon(mA),v1Mon(V),i1Mon(mA),VDDA_RAW(mV),VDDA_REG(mV),VDDD_RAW(mV),VDDD_REG(mV),MOD_GND(mV),Temperature(C),IrradStatus(On = 1),DoseRate(kRad/hr),TotalDose(MRad) **")==0 && readout.compare("#** -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- **")==0)
 			{
 
-				//if (readout == "") continue;
 				line++;
 				columns.clear();
 				std::istringstream temp(readout);
@@ -101,25 +136,24 @@ void scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_cod
 					//std::cout << columns.at(i) << std::endl;
 					try {
 						lvec.push_back(std::stof(columns.at(i).c_str()));
-						//std::cout << lvec.at(i) << std::endl;
-					}
+						}
 					catch (const std::exception& e) {
 						continue;
-						//std::cout << columns.at(i) << std::endl;
+
 					}
-					//std::cout << "error on line " <<line <<std::endl; }
+				//	std::cout << "found " <<lvec.size() <<" columns" <<std::endl; 
 				}
-				if (lvec.size() == 0 || columns.size() == 0) {
+				if (lvec.size() <14 || columns.size() == 0) {
 					//	std::cout << "vectors unfilled on line " << line <<"\n line reads " <<readout << std::endl;
 					continue;
 				}
 				vals.push_back(lvec);
-				/*try { float a = lvec.at(0); }
-			   catch (std::exception& e) {
-				   if (line == 200) { std::cout << e.what() << " on line " << line << "\n which reads " << readout << std::endl; }
-			   }//having this line in causes the columns request to fail....why???????*/
 				lvec.clear();
-				//std::cout << vals.size() << std::endl;
+				if (boardnumber == 84 && vals.size() >= 44) {
+					wc = 0;
+					continue;
+				}
+				//if (boardnumber == 84) std::cout << "\r Reading code is " << wc << std::flush;
 
 			}
 			//			if(wc==0) continue;
@@ -134,20 +168,21 @@ void scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_cod
 	hists.push_back(new TH1F(("vd" + std::to_string(rn)).c_str(), "Voltage in Digital Channel; Time (s); Voltage (V)", vals.size(), 0, 10 * vals.size()));
 	//std::cout << vals.at(0).size() << std::endl;
 
-	for (int i = 0; i < vals.size() - 1; i++) {
+	for (int i = 0; i < vals.size(); i++) {
 		try {
 			vals.at(i).at(0) = vals.at(i).at(0) - vals.at(0).at(0);
-			std::cout << " \r Time of envent is at " << vals.at(i).at(0) << "seconds from start" << std::flush;
+			//std::cout << " \r Time of envent is at " << vals.at(i).at(0) << "seconds from start" << std::flush;
 			hists.at(0)->SetBinContent(i, vals.at(i).at(1));
-			//std::cout << vals.at(0).at(i) << std::endl;
+			//std::cout <<"There are "<< vals.at(i).size() <<" variables at play" << std::endl;
 		}
 
-		catch (std::exception& e) { //std::cout << " \n Error in element " <<i  <<"of type " <<e.what()<< std::endl; 
+		catch (std::exception& e) { //std::cout << " \n Error in element " <<i  <<"of type " <<e.what()<< std::endl;
 			continue;
 		}
 	}
+	if (boardnumber == 48) std::cout << "Sample Current " << vals.at(10).at(2) << std::endl;
 	hists.push_back(new TH1F(("id" + std::to_string(rn)).c_str(), "Current in Digital Channel; Time (s); Current (mA)", vals.size(), 0, 10 * vals.size()));
-	for (int i = 0; i < vals.size() - 1; i++) {
+	for (int i = 0; i < vals.size(); i++) {
 		try { hists.at(1)->SetBinContent(i, 1000 * vals.at(i).at(2)); }
 		catch (...) {
 			continue;
@@ -162,13 +197,13 @@ void scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_cod
 		catch (std::exception& e) { continue; }
 	}
 	if (aon = true) {
-		hists.push_back(new TH1F("va", "Voltage in Analog Channel; Time (s); Voltage (V)", vals.size(), 0, 10 * vals.size()));
+		hists.push_back(new TH1F(("va"+std::to_string(rn)).c_str(), "Voltage in Analog Channel; Time (s); Voltage (V)", vals.size(), 0, 10 * vals.size()));
 		//std::cout << vals.at(0).size() << std::endl;
 
-		for (int i = 0; i < vals.size() - 1; i++) {
+		for (int i = 0; i < vals.size(); i++) {
 			try {
 				vals.at(i).at(0) = vals.at(i).at(0) - vals.at(0).at(0);
-				std::cout << " \r Time of envent is at " << vals.at(i).at(0) << "seconds from start" << std::flush;
+				//std::cout << " \r Time of envent is at " << vals.at(i).at(0) << "seconds from start" << std::flush;
 				hists.at(3)->SetBinContent(i, vals.at(i).at(3));
 				//std::cout << vals.at(0).at(i) << std::endl;
 			}
@@ -178,14 +213,14 @@ void scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_cod
 				continue;
 			}
 		}
-		hists.push_back(new TH1F("ia", "Current in Analog Channel; Time (s); Current (mA)", vals.size(), 0, 10 * vals.size()));
+		hists.push_back(new TH1F(("ia"+std::to_string(rn)).c_str(), "Current in Analog Channel; Time (s); Current (mA)", vals.size(), 0, 10 * vals.size()));
 		for (int i = 0; i < vals.size() - 1; i++) {
 			try { hists.at(4)->SetBinContent(i, 1000 * vals.at(i).at(4)); }
 			catch (...) {
 				continue;
 			}
 		}
-		hists.push_back(new TH1F("pa", "Power in Analog Channel; Time (s); Power(mW)", vals.size(), 0, 10 * vals.size()));
+		hists.push_back(new TH1F(("pa"+std::to_string(rn)).c_str(), "Power in Analog Channel; Time (s); Power(mW)", vals.size(), 0, 10 * vals.size()));
 		for (int i = 0; i < vals.size(); i++) {
 			try {
 				//vals.at(i).at(0) = vals.at(i).at(0) - vals.at(0).at(0);
@@ -218,46 +253,63 @@ void scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_cod
 	tempgraphs.push_back(new TGraph(V, T));
 	for (int i = 0; i < hists.size(); i++) hists.at(i)->Write();
 	//***NOTE: PD & PA have older variable names from attempting to plot Powers instead of currents, Too lazy to change ***
-	PAall.push_back(hists.at(4)); //analog current 
+	PAall.push_back(hists.at(4)); //analog current
 	PDall.push_back(hists.at(1)); //Digital current
 	//std::cout << "\n" <<tempgraphs.size() <<" Temperature Graphs recorded" << std::endl; //sanity check
 //	f->Write();
 	//f->Close();
-	try{
+	//if (vals.at(1).size() == 14) {
 		std::vector<std::vector<float>> av = time_averging(vals);
-	for (int i = 0; i < avg_hists.size(); i++) {
-		for (int j = 0; j < av.at(i).size(); j++) avg_hists.at(i)->Fill(av.at(i).at(j));
-	}
-}
-	catch (std::exception& e) { std::cout << "Unable to perform time averaging on run " << rn << "\n Returned error " << e.what() << std::endl; }
+
+		try {
+
+			for (int i = 0; i < av.size(); i++) {
+				for (int j = 0; j < av.at(i).size(); j++) avg_hists.at(i)->Fill(av.at(i).at(j));
+			}
+		}
+		catch (std::exception& e) { std::cout << "Unable to perform time averaging on run " << rn << "\n Returned error " << e.what() << std::endl; }
+		av.~vector();
+		
+		try {
+				std::vector<TH1F*> temps = TempLoss(vals, std::to_string(boardnumber), vals.at(0).at(0));
+				if (rn == 0) {
+					for (int k = 0; k < temps.size(); k++) {
+						ttemps.at(k)=temps.at(k);
+					}
+				}
+				try {
+				if(rn==0) {
+					for (int k = 0; k < temps.size(); k++) ttemps.at(k)->Add(temps.at(k));
+				}
+				}
+				catch (std::exception& e) {};
+		}
+		catch (std::exception& e) { std::cout << "Unable to perform Temp Analysis on run " << rn << "\n Returned error " << e.what() << std::endl; }
+	//}
 	T.Delete();
 	C.Delete();
 	V.Delete();
-	std::vector<float> averages = average(vals);
 	columns.~vector();
-	vals.~vector(); 
-	if (lastof) {
-		for (int i = 0; i < avg_hists.size(); i++) avg_hists.at(i)->Write();
-		avg_hists.~vector();
-	}
-	//get rid of memory leak possiblity 
-	return averages;
+	vals.~vector();
+	//hists.~vector();
+	//av.~vector();
+	//if (lastof) {
+		//for (int i = 0; i < avg_hists.size(); i++) avg_hists.at(i)->Write(0,1,0);
+	//}
+//	avg_hists.~vector();
+	//get rid of memory leak possiblity
+	return line;
 }
-
-
-	
-
-	int main()
+int main()
 {
-	fstream log_file, time_file;
+	fstream log_file;
 	 //get the dat file
 	std::vector <TFile*> files;
-<<<<<<< HEAD
-	std::vector <std::string> t;
+	std::vector <std::vector <std::string>> t;
 	std::vector <std::string> fnames;
 	std::cout << "First vars loaded" << std::endl;
-	int bn[4];
-	int nruns[4] = { 0,0,0,0 };
+	int bn[9];
+	int nruns[9] = { 0,0,0,0,0,0,0,0,0 };
 	std::cout << "Second set" << std::endl;
 	//allows for more generalizability than using array
 	//std::string fnames[8], t[8]; //time needs to be the time of the run
@@ -267,55 +319,6 @@ void scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_cod
 	//fnames[2] = "107";
 	//fnames[3] = "23";
 	/*t[3] = "Jan 30 14:02"; //the actual time code is not working with str::find, have to pay closer attention to the limit cases??
-=======
-	std::vector<std::string> fnames, t; //time needs to be the time of the run
-	int bn[4];
-	std::string board_s;
-	time_file.open("runlog.txt");
-	while (!time_file.eof())
-	{
-		std::string logbook;
-		int i = 0;
-		while (getline(time_file, logbook)) {
-			if (logbook.find("Board") != std::string::npos) {
-				std::string temp_s;
-				std::cout << "Found First board" << std::endl;
-				std::istringstream logbook_t(logbook);
-				while (std::getline(logbook_t, temp_s, ' ')) {
-					try {
-						std::stoi(temp_s);
-						board_s = logbook;
-						i = 1;
-						std::cout << temp_s << std::endl;
-					}
-					catch (std::exception& e) { continue; }
-				}
-			}
-			else {
-				std::string temp_s;
-				std::istringstream logbook_t(logbook);
-				while (std::getline(logbook_t, temp_s, ' ')) {
-					try {
-						
-						if (logbook.find("Board")!=std::string::npos ) continue;
-						t.push_back(logbook);
-						int j = t.size();
-						try { std::stoi(t.at(j).c_str()); }
-						catch (std::exception&e) {
-							std::cout << logbook << std::endl;
-							fnames.push_back(board_s + "_run_" + std::to_string(i));
-						}
-					}
-					catch (std::exception& e) {
-						continue;
-					}
-				}
-			}
-		}
-	}
-		time_file.close();
-/*	t[3] = "Jan 30 14:02"; //the actual time code is not working with str::find, have to pay closer attention to the limit cases??
->>>>>>> first_try_at_higher_function
 	t[2] = "Jan 30 11";
 	t[1] = "Jan 29 17";
 	t[0] = "Jan 29 16:27";
@@ -323,9 +326,12 @@ void scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_cod
 	t[5] = "Jan 31 15:26";
 	t[7] = "Jan 31 15:11";
 	t[4] = "Jan 31 15:03";*/
-<<<<<<< HEAD
 	fstream runtimes;
-	std::string line; 
+	std::string line;
+	std::vector<TCanvas*> cvec(4);
+	for (int i = 0; i < 4; i++) cvec.at(i) = new TCanvas();
+	std::vector<TLegend*> legs(4);
+	for (int i = 0; i < 4; i++) legs.at(i)= new TLegend(0.85, 0.7, 1, 0.9);
 	runtimes.open("runlog.txt");
 	int i = 0;
 	while( runtimes.is_open() && !runtimes.eof()) {
@@ -338,7 +344,10 @@ void scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_cod
 					while (getline(templine, temp, ' ')) {
 						try {
 							stof(temp);
+							//if (temp == fnames.at(i)) continue;
 							fnames.push_back(temp);
+							std::vector <std::string> blah (0);
+							t.push_back(blah);
 							i++;
 						}
 						catch (std::exception& e) {
@@ -346,9 +355,9 @@ void scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_cod
 						}
 					}
 				}
-				if(line.find("#")==std::string::npos ) {
+				if(line.find("#")==std::string::npos && line.find("End")==std::string::npos) {
 					if (i > 0) {
-						t.push_back(line);
+						t.at(i-1).push_back(line);
 						//std::cout << line << std::endl;
 
 						nruns[i - 1]++;
@@ -356,7 +365,7 @@ void scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_cod
 					else continue;
 				}
 				//if(line.find("Fil")) runtimes.close();
-			
+
 		}
 	}
 	for (int i = 0; i < fnames.size(); i++) {
@@ -364,50 +373,70 @@ void scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_cod
 		bn[i] = std::stoi(fnames[i]);
 		//fnames[4 + i] = fnames[i] + "_run_2";
 	}
+	int l = 0;
 	for (int i = 0; i < fnames.size(); i++)
-=======
-
-		for (int i = 0, j = 0; i < fnames.size(); i++) {
-			try {
-				bn[j] = std::stoi(fnames[i]);
-				j++;
-				//fnames[4 + i] = fnames[i] + "_run_2";
-			}
-			catch (std::exception& e) {
-				continue;
-			}
-		}
-	for (int i = 0; i < 8; i++)
->>>>>>> first_try_at_higher_function
 	{
 
-		std::cout << "Starting with board number " << fnames[i] << std::endl; 
+		avg_hists.clear();
+		std::cout << "Starting with board number " << fnames[i] << std::endl;
 	//	bn[i] = std::stoi(fnames[i]);
 	//	t[i] = "#** Start session " + t[i] + "**";
+		//if (bn[i] != 23) continue;
 		std::string ftnames = "boardnumber_" + fnames[i]+".root";
 		files.push_back(new TFile(ftnames.c_str(), "RECREATE"));
-<<<<<<< HEAD
-		std::cout << nruns[i] << std::endl;
-		std::vector<TH1F*>avg_hists(4);
-		avg_hists.at(0) = new TH1F(("vd" + fnames[i]).c_str(), ("Average Voltages in Digital Channel on Board " + fnames[i] + "; Voltage averaged over 1 minute intervals (V)").c_str(), 20, 1.4, 1.6);
-		avg_hists.at(1) = new TH1F(("ad" + fnames[i]).c_str(), ("Average Curents in Digital Channel on Board " + fnames[i] + "; Current averaged over 1 minute intervals (mA)").c_str(), 20, 30, 34);
-		avg_hists.at(2) = new TH1F(("va" + fnames[i]).c_str(), ("Average Voltages in Analog Channel on Board " + fnames[i] + "; Voltage averaged over 1 minute intervals (V)").c_str(), 20, 1.4, 1.6);
-		avg_hists.at(3) = new TH1F(("aa" + fnames[i]).c_str(), ("Average Curents in Analog Channel on Board " + fnames[i] + "; Current averaged over 1 minute intervals (mA)").c_str(), 20, 30, 34);
+		std::vector <TH1F*> ttemps(4);
+		//std::cout << nruns[i] << std::endl;
+		//std::vector<TH1F*>avg_hists(4);
+		avg_hists.push_back( new TH1F(("Avd" + fnames[i]).c_str(), "Average Voltages in Digital Channel on Chip ; Voltage averaged over 1 minute intervals (V)", 150, 1.49, 1.56));
+		avg_hists.push_back( new TH1F(("Aad" + fnames[i]).c_str(), "Average Curents in Digital Channel on Board ; Current averaged over 1 minute intervals (A)", 150, 0.0315, 0.0355));
+		avg_hists.push_back( new TH1F(("Ava" + fnames[i]).c_str(), "Average Voltages in Analog Channel on Board ; Voltage averaged over 1 minute intervals (V)", 200, 0.8, 1.55));
+		avg_hists.push_back(new TH1F(("Aaa" + fnames[i]).c_str(), "Average Curents in Analog Channel on Board ; Current averaged over 1 minute intervals (A)", 100, 0.03, 0.06));
+		int lastline = 0;
 		for (int j = 0; j < nruns[i]; j++)
 		{
 			log_file.open("C:/Users/Silas Grossberndt/Documents/ABC_Boards/TIDLogTesting.dat"); //to reset the read code each time
-			bool lo = (j == nruns[i] - 1);
-			scan_dat_file(&log_file, files.at(i), bn[i], t.at(j), true, avg_hists, lo, j);
+			bool lo = (j == nruns[i]); 
+			l++;
+			//if (l == 40) continue;
+			//std::cout << "Looking for data taken from index " << l-1 << std::endl;
+			try {
+
+				lastline=scan_dat_file(&log_file, files.at(i), bn[i], t.at(i).at(j), true,lo, j, lastline, ttemps);
+				std::cout << "Run number " << j << " complete on chip " << bn[i] << std::endl;
+			}
+			catch (std::exception& e) { continue; }
+			//l++;
 			log_file.close();
 		}
-		files.at(i)->Close();
-=======
-		if (i<4) scan_dat_file(&log_file, files.at(i), bn[i%4], t.at(i), false);
-		if (i >=4) scan_dat_file(&log_file, files.at(i), bn[i % 4], t.at(i), true);
-		log_file.close();
->>>>>>> first_try_at_higher_function
+		for (int j = 0; j < avg_hists.size(); j++) {
+			avg_hists.at(j)->Write();
+			ttemps.at(j)->Write();
+			avg_hists.at(j)->SetStats(0);
+			avg_hists.at(j)->SetLineColor(i);
+			//avg_hists.at(j)->Sumw2();
+			avg_hists.at(j)->Scale(1 / (avg_hists.at(j)->Integral()));
+			cvec.at(j)->cd();
+			if (i == 0) {
+				std::string title = avg_hists.at(j)->GetTitle();
+				avg_hists.at(j)->SetTitle((title + " Renormailzed to #int =1").c_str());
+			}
+			//avg_hists.at(j)->SetLineStyle(1);
+			avg_hists.at(j)->GetYaxis()->SetRangeUser(0.00001, 1);
+			//cvec.at(j)->SetLogy();
+			legs.at(j)->AddEntry(avg_hists.at(j), fnames.at(i).c_str());
+			avg_hists.at(j)->Draw("same");
+			legs.at(j)->Draw();
+		}
+		if (files.size() == 1) files.at(0)->Close();
+		else files.at(i)->Close();
+		std::cout << fnames.at(i) << " is closed" << std::endl;
 	}
-	TFile* f = new TFile("current.root", "Recreate");
+	for (int i = 0; i < 4; i++) {
+		cvec.at(i)->Print(("Canvas_" + std::to_string(i) + ".pdf").c_str());
+		cvec.at(i)->SetLogy();
+		cvec.at(i)->Print(("Canvas_" + std::to_string(i) + "log_y.pdf").c_str());
+	}
+/*	TFile* f = new TFile("current.root", "Recreate");
 	for (int i = 0; i < 8; i++) {
 		std::string ahname, dhname, titles;
 		ahname = fnames[i] + "pa";
@@ -491,7 +520,7 @@ void scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_cod
 			tempgraphs.at(i)->Draw("same *");
 			tempgraphs.at(i)->Write();
 		}
-		else { 
+		else {
 			c4->cd();
 			tempgraphs.at(i)->SetName((std::to_string(bn[(i / 2) % 4]) + "v").c_str());
 			tempgraphs.at(i)->SetTitle(("Chip " + std::to_string(bn[(i / 2) % 4])).c_str());
@@ -518,9 +547,10 @@ void scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_cod
 	c3->Print("TC.png");
 	c4->Print("TV.png");
 	//c4->Print("TV.pdf]");
+	
 	f->Write();
 	//exit behavior poorly defined--this is causing issues with the exit behavior of board 23, I am trying to fix this by specifing the timing
-
+	*/
 
 	return 0;
 }
