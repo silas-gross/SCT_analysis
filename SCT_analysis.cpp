@@ -21,20 +21,21 @@ std::vector <TH1F*> avg_hists;
 std::vector<TH1F*> TempLoss(std::vector<std::vector<float>> data, std::string board_label, const long init_time)
 {
 	TH1F* Temp = new TH1F("temp", "temp", 100, 0, 20);
-	TH1F* Tloss = new TH1F((board_label + "_tloss").c_str(), ("Expected Temperature increase for chip " + board_label + " from initial; Temperature increase (K)").c_str(), 100, 0, 2);
-	TH1F* TGain = new TH1F((board_label + "_act_tloss" ).c_str(), ("Measured Temperature increase for chip " + board_label + "from initial; Teperature increase (K)").c_str(), 100, 0, 2);
-	TH1F* TDiff = new TH1F((board_label + "_diffs_of_loss").c_str(), ("Diffences of Temperature Increase approach for chip " + board_label + ";  Teperature increase (K)").c_str(), 100, 0, 2);
+	TH1F* Tloss = new TH1F((board_label + "_tloss").c_str(), ("Expected Temperature for chip " + board_label + " from initial; Temperature (K)").c_str(), 100, 0, 25);
+	TH1F* TGain = new TH1F((board_label + "_act_tloss" ).c_str(), ("Measured Temperature for chip " + board_label + "from initial; Teperature(K)").c_str(), 100, 0, 25);
+	TH1F* TDiff = new TH1F((board_label + "_diffs_of_loss").c_str(), ("Diffences of Temperature Increase approach for chip " + board_label + ";  Teperature diffrence (K)").c_str(), 25, -1, 1);
 	float tinit = data.at(1).at(10);
 	const float Ts = 20, hs = 10.88, A = 0.0075;
 	for (int i = 0; i < data.size(); i++)
 	{
 		//if (data.at(i).at(10) == 0) data.at(i).at(10) = 100;
-		float tdiff = data.at(i).at(10) - tinit;
-		float tmdiff = (data.at(i).at(1)*data.at(i).at(2) + data.at(i).at(3)*data.at(i).at(4)) / (A*hs) + Ts - tinit;
+		if (data.at(i).at(10) == 0)continue;
+		float tdiff = data.at(i).at(10) ;
+		float tmdiff = (data.at(i).at(1)*data.at(i).at(2) + data.at(i).at(3)*data.at(i).at(4)) / (A*hs) + Ts ;
 		long time_spot = data.at(i).at(0) - init_time;
-		std::cout << "Temp diff measured " << tdiff << " K" << " versus what it actually is" <<data.at(i).at(10)<<std::endl;
+		//std::cout << "Temp diff measured " << tdiff << " K" << " versus what it actually is" <<data.at(i).at(10)<<std::endl;
 		time_spot = time_spot / 10;
-		float diffs = abs(tdiff - tmdiff);
+		float diffs = tdiff - tmdiff;
 		Temp->Fill(data.at(i).at(10));
 		Tloss->Fill(tmdiff);
 		TGain->Fill(tdiff);
@@ -271,18 +272,19 @@ int scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_code
 		av.~vector();
 		
 		try {
-				std::vector<TH1F*> temps = TempLoss(vals, std::to_string(boardnumber), vals.at(0).at(0));
-				if (rn == 0) {
-					for (int k = 0; k < temps.size(); k++) {
-						ttemps.at(k)=temps.at(k);
+			std::vector<TH1F*> temps = TempLoss(vals, std::to_string(boardnumber), vals.at(0).at(0));
+
+
+				for (int k = 0; k < temps.size(); k++) {
+					try {
+						ttemps.at(k)->Add(temps.at(k));
+						if (rn==0)ttemps.at(k)->SetNameTitle(temps.at(k)->GetName(), temps.at(k)->GetTitle());
 					}
+
+					catch (std::exception& e) { std::cout << e.what() << std::endl; };
 				}
-				try {
-				if(rn==0) {
-					for (int k = 0; k < temps.size(); k++) ttemps.at(k)->Add(temps.at(k));
-				}
-				}
-				catch (std::exception& e) {};
+			
+			temps.~vector();
 		}
 		catch (std::exception& e) { std::cout << "Unable to perform Temp Analysis on run " << rn << "\n Returned error " << e.what() << std::endl; }
 	//}
@@ -384,13 +386,17 @@ int main()
 		//if (bn[i] != 23) continue;
 		std::string ftnames = "boardnumber_" + fnames[i]+".root";
 		files.push_back(new TFile(ftnames.c_str(), "RECREATE"));
-		std::vector <TH1F*> ttemps(4);
+		std::vector <TH1F*> ttemps;
 		//std::cout << nruns[i] << std::endl;
 		//std::vector<TH1F*>avg_hists(4);
 		avg_hists.push_back( new TH1F(("Avd" + fnames[i]).c_str(), "Average Voltages in Digital Channel on Chip ; Voltage averaged over 1 minute intervals (V)", 150, 1.49, 1.56));
 		avg_hists.push_back( new TH1F(("Aad" + fnames[i]).c_str(), "Average Curents in Digital Channel on Board ; Current averaged over 1 minute intervals (A)", 150, 0.0315, 0.0355));
 		avg_hists.push_back( new TH1F(("Ava" + fnames[i]).c_str(), "Average Voltages in Analog Channel on Board ; Voltage averaged over 1 minute intervals (V)", 200, 0.8, 1.55));
 		avg_hists.push_back(new TH1F(("Aaa" + fnames[i]).c_str(), "Average Curents in Analog Channel on Board ; Current averaged over 1 minute intervals (A)", 100, 0.03, 0.06));
+		ttemps.push_back(new TH1F("a", "b", 100, 0, 25));
+		ttemps.push_back(new TH1F("c", "b", 100, 0, 25));
+		ttemps.push_back(new TH1F("d", "b", 25, -1, 1));
+		ttemps.push_back(new TH1F("e", "b", 100, 0, 20));
 		int lastline = 0;
 		for (int j = 0; j < nruns[i]; j++)
 		{
@@ -410,7 +416,9 @@ int main()
 		}
 		for (int j = 0; j < avg_hists.size(); j++) {
 			avg_hists.at(j)->Write();
-			ttemps.at(j)->Write();
+			if(ttemps.at(j)!=NULL){
+				ttemps.at(j)->Write();
+			}
 			avg_hists.at(j)->SetStats(0);
 			avg_hists.at(j)->SetLineColor(i);
 			//avg_hists.at(j)->Sumw2();
