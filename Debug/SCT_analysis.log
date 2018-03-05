@@ -1,4 +1,4 @@
-﻿Build started 3/3/2018 10:21:06 AM.
+﻿Build started 3/5/2018 9:49:55 AM.
      1>Project "C:\Users\Silas Grossberndt\Documents\Visual Studio 2015\Projects\SCT_analysis\SCT_analysis\SCT_analysis.vcxproj" on node 2 (Build target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\CL.exe /c /IC:\root_v5.34.36\include /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _CRT_SECURE_NO_WARNINGS /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Yu"stdafx.h" /Fp"Debug\SCT_analysis.pch" /Fo"Debug\\" /Fd"Debug\vc140.pdb" /Gd /TP /analyze- /errorReport:prompt SCT_analysis.cpp
@@ -7,35 +7,36 @@
      1>c:\root_v5.34.36\include\tpad.h(327): warning C4800: 'Int_t': forcing value to bool 'true' or 'false' (performance warning)
      1>c:\root_v5.34.36\include\tpad.h(328): warning C4800: 'Int_t': forcing value to bool 'true' or 'false' (performance warning)
      1>c:\root_v5.34.36\include\tpad.h(384): warning C4800: 'TVirtualViewer3D *const ': forcing value to bool 'true' or 'false' (performance warning)
-     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(28): warning C4305: 'initializing': truncation from 'double' to 'float'
-     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(29): warning C4018: '<': signed/unsigned mismatch
-     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(35): warning C4244: 'initializing': conversion from 'float' to 'long', possible loss of data
-     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(59): warning C4018: '<': signed/unsigned mismatch
-     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(71): warning C4805: '==': unsafe mix of type 'int' and type 'bool' in operation
-     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(70): warning C4101: 'e': unreferenced local variable
-     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(136): warning C4018: '<': signed/unsigned mismatch
-     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(172): warning C4018: '<': signed/unsigned mismatch
-     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(186): warning C4018: '<': signed/unsigned mismatch
-     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(193): warning C4018: '<': signed/unsigned mismatch
-     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(204): warning C4018: '<': signed/unsigned mismatch
-     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(218): warning C4018: '<': signed/unsigned mismatch
-     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(225): warning C4018: '<': signed/unsigned mismatch
-     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(236): warning C4018: '<': signed/unsigned mismatch
-     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(255): warning C4018: '<': signed/unsigned mismatch
-     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(267): warning C4018: '<': signed/unsigned mismatch
+     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(29): warning C4305: 'initializing': truncation from 'double' to 'float'
+     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(30): warning C4018: '<': signed/unsigned mismatch
+     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(36): warning C4244: 'initializing': conversion from 'float' to 'long', possible loss of data
+     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(60): warning C4018: '<': signed/unsigned mismatch
+     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(72): warning C4805: '==': unsafe mix of type 'int' and type 'bool' in operation
+     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(71): warning C4101: 'e': unreferenced local variable
+     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(137): warning C4018: '<': signed/unsigned mismatch
+     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(173): warning C4018: '<': signed/unsigned mismatch
+     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(187): warning C4018: '<': signed/unsigned mismatch
+     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(194): warning C4018: '<': signed/unsigned mismatch
+     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(205): warning C4018: '<': signed/unsigned mismatch
+     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(219): warning C4018: '<': signed/unsigned mismatch
+     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(226): warning C4018: '<': signed/unsigned mismatch
+     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(237): warning C4018: '<': signed/unsigned mismatch
+     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(256): warning C4018: '<': signed/unsigned mismatch
      1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(268): warning C4018: '<': signed/unsigned mismatch
-     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(275): warning C4244: 'argument': conversion from 'float' to 'const long', possible loss of data
-     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(278): warning C4018: '<': signed/unsigned mismatch
-     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(141): warning C4101: 'e': unreferenced local variable
-     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(180): warning C4101: 'e': unreferenced local variable
-     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(198): warning C4101: 'e': unreferenced local variable
-     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(212): warning C4101: 'e': unreferenced local variable
-     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(230): warning C4101: 'e': unreferenced local variable
-     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(373): warning C4018: '<': signed/unsigned mismatch
-     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(379): warning C4018: '<': signed/unsigned mismatch
-     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(417): warning C4018: '<': signed/unsigned mismatch
-     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(355): warning C4101: 'e': unreferenced local variable
-     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(413): warning C4101: 'e': unreferenced local variable
+     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(269): warning C4018: '<': signed/unsigned mismatch
+     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(276): warning C4244: 'argument': conversion from 'float' to 'const long', possible loss of data
+     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(279): warning C4018: '<': signed/unsigned mismatch
+     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(142): warning C4101: 'e': unreferenced local variable
+     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(181): warning C4101: 'e': unreferenced local variable
+     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(199): warning C4101: 'e': unreferenced local variable
+     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(213): warning C4101: 'e': unreferenced local variable
+     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(231): warning C4101: 'e': unreferenced local variable
+     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(335): warning C4018: '<': signed/unsigned mismatch
+     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(331): warning C4101: 'e': unreferenced local variable
+     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(404): warning C4018: '<': signed/unsigned mismatch
+     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(468): warning C4018: '<': signed/unsigned mismatch
+     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(471): warning C4018: '<': signed/unsigned mismatch
+     1>c:\users\silas grossberndt\documents\visual studio 2015\projects\sct_analysis\sct_analysis\sct_analysis.cpp(390): warning C4101: 'e': unreferenced local variable
        Link:
          C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\Silas Grossberndt\Documents\Visual Studio 2015\Projects\SCT_analysis\Debug\SCT_analysis.exe" /INCREMENTAL /NOLOGO /LIBPATH:C:\root_v5.34.36\lib libhist.lib libTree.lib libGPad.lib libRIO.lib libHistpainter.lib libCore.lib libGraf.lib vectorDict.lib libMatrix.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /Debug /PDB:"C:\Users\Silas Grossberndt\Documents\Visual Studio 2015\Projects\SCT_analysis\Debug\SCT_analysis.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\Silas Grossberndt\Documents\Visual Studio 2015\Projects\SCT_analysis\Debug\SCT_analysis.lib" /MACHINE:X86 Debug\SCT_analysis.obj
          Debug\stdafx.obj
@@ -44,4 +45,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:02.35
+Time Elapsed 00:00:01.63
