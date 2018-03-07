@@ -11,6 +11,7 @@
 #include <vector>
 #include <iostream>
 #include <sstream>
+#include <thread>
 #include "C:/root_v5.34.36/include/TCanvas.h"
 #include "C:/root_v5.34.36/include/TLegend.h"
 #include "C:/root_v5.34.36/include/TGraph.h"
@@ -53,8 +54,8 @@ std::vector<TH1F*> TempLoss(std::vector<std::vector<float>> data, std::string bo
 }
 std::vector<std::vector<float>> time_averging(std::vector<std::vector<float>> data)
 {
-	std::vector<float> ta_vd, ta_va, ta_ad, ta_aa;
-	float vd=0, va=0, ad=0, aa=0, n=0;
+	std::vector<float> ta_vd, ta_va, ta_ad, ta_aa, ta_vdreg, ta_vareg;
+	float vd=0, va=0, ad=0, aa=0, n=0, vdreg=0, vareg=0;
 //	std::cout << "Input vector has size " << data.size() << " with " << data.at(0).size() << " columns" << std::endl;
 	for (int i = 0; i < data.size(); i++)
 	{
@@ -65,17 +66,19 @@ std::vector<std::vector<float>> time_averging(std::vector<std::vector<float>> da
 		try {
 			va += data.at(i).at(3);
 			aa += data.at(i).at(4);
+			vdreg += data.at(i).at(8);
+			vareg += data.at(i).at(6);
 			n++;
 		}
 		catch (std::exception& e) {};
 		if (i % 6 == true) {
 			if (n != 0) {
 			ta_vd.push_back(vd / n);
-
+			ta_vareg.push_back(vareg / n);
 			ta_ad.push_back(ad / n);
-			
-				ta_va.push_back(va / n);
-				ta_aa.push_back(aa / n);
+			ta_vdreg.push_back(vdreg / n);
+			ta_va.push_back(va / n);
+			ta_aa.push_back(aa / n);
 
 			}
 			n = 0;
@@ -83,13 +86,17 @@ std::vector<std::vector<float>> time_averging(std::vector<std::vector<float>> da
 			va = 0;
 			aa = 0;
 			ad = 0;
+			vdreg = 0;
+			vareg = 0;
 		}
 	}
-	std::vector <std::vector<float>> avgs (4);
+	std::vector <std::vector<float>> avgs (6);
 	avgs.at(0) = ta_vd;
 	avgs.at(1) = ta_ad;
 	avgs.at(2) = ta_va;
 	avgs.at(3) = ta_aa;
+	avgs.at(4) = ta_vdreg;
+	avgs.at(5) = ta_vareg;
 //	std::cout << "Readout vectors have size " << ta_vd.size() << std::endl;
 	return avgs;
 }
@@ -302,6 +309,57 @@ int scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_code
 	//get rid of memory leak possiblity
 	return line;
 }
+void each_board_run(std::string fnames, int nruns, int bn, std::vector<std::string>t, std::vector<TLegend*>legs, std::vector<TCanvas*>cvec, int i)
+{
+	int l = 0;
+	std::vector<TH1F*> avg_hists, ttemps;
+	std::cout << "Starting with board number " << fnames << std::endl;
+	std::string ftnames = "boardnumber_" + fnames+ ".root";
+	TFile* files=new TFile(ftnames.c_str(), "RECREATE"); //This line throws a memory write error
+	avg_hists.push_back(new TH1F(("Avd" + fnames).c_str(), "Average Voltages in Digital Channel on Chip ; Voltage averaged over 1 minute intervals (V)", 150, 1.49, 1.56));
+	avg_hists.push_back(new TH1F(("Aad" + fnames).c_str(), "Average Curents in Digital Channel on Board ; Current averaged over 1 minute intervals (A)", 150, 0.0315, 0.0355));
+	avg_hists.push_back(new TH1F(("Ava" + fnames).c_str(), "Average Voltages in Analog Channel on Board ; Voltage averaged over 1 minute intervals (V)", 200, 0.8, 1.55));
+	avg_hists.push_back(new TH1F(("Aaa" + fnames).c_str(), "Average Curents in Analog Channel on Board ; Current averaged over 1 minute intervals (A)", 100, 0.03, 0.06));
+	ttemps.push_back(new TH1F(("a"+fnames).c_str(), "b", 100, 0, 25));
+	ttemps.push_back(new TH1F("c", "b", 100, 0, 25));
+	ttemps.push_back(new TH1F("d", "b", 25, -1, 1));
+	ttemps.push_back(new TH1F("e", "b", 100, 0, 20));
+	int lastline = 0;
+	for (int j = 0; j < nruns; j++)
+	{
+		fstream log_file("C:/Users/Silas Grossberndt/Documents/ABC_Boards/TIDLogTesting.dat"); //to reset the read code each time
+		bool lo = (j == nruns);
+		l++;
+		try{
+				lastline = scan_dat_file(&log_file, files, bn, t.at(j), true, lo, j, lastline, ttemps);
+				std::cout << "Run number " << j << " complete on chip " << bn << std::endl;
+			}
+		catch (std::exception& e) { continue; }
+			//l++;
+		log_file.close();
+	}
+	for (int j = 0; j < avg_hists.size(); j++) {
+		avg_hists.at(j)->Write();
+		if (ttemps.at(j) != NULL) {
+			ttemps.at(j)->Write();
+		}
+		avg_hists.at(j)->SetStats(0);
+		avg_hists.at(j)->SetLineColor(i);
+		avg_hists.at(j)->Scale(1 / (avg_hists.at(j)->Integral()));
+		cvec.at(j)->cd();
+		if (i == 0) {
+			std::string title = avg_hists.at(j)->GetTitle();
+			avg_hists.at(j)->SetTitle((title + " Renormailzed to #int =1").c_str());
+		}
+	avg_hists.at(j)->GetYaxis()->SetRangeUser(0.00001, 1);
+	legs.at(j)->AddEntry(avg_hists.at(j), fnames.c_str());
+	avg_hists.at(j)->Draw("same");
+	legs.at(j)->Draw();
+	}
+	files->Close();
+	std::cout << fnames << " is closed" << std::endl;
+}
+
 int main()
 {
 	fstream log_file;
@@ -313,32 +371,16 @@ int main()
 	int bn[9];
 	int nruns[9] = { 0,0,0,0,0,0,0,0,0 };
 	std::cout << "Second set" << std::endl;
-	//allows for more generalizability than using array
-	//std::string fnames[8], t[8]; //time needs to be the time of the run
-	//int bn[4];
-	//fnames[0] = "119";
-	//fnames[1] = "125";
-	//fnames[2] = "107";
-	//fnames[3] = "23";
-	/*t[3] = "Jan 30 14:02"; //the actual time code is not working with str::find, have to pay closer attention to the limit cases??
-	t[2] = "Jan 30 11";
-	t[1] = "Jan 29 17";
-	t[0] = "Jan 29 16:27";
-	t[6] = "Jan 31 15:36";
-	t[5] = "Jan 31 15:26";
-	t[7] = "Jan 31 15:11";
-	t[4] = "Jan 31 15:03";*/
 	fstream runtimes;
 	std::string line;
-	std::vector<TCanvas*> cvec(4);
-	for (int i = 0; i < 4; i++) cvec.at(i) = new TCanvas();
-	std::vector<TLegend*> legs(4);
-	for (int i = 0; i < 4; i++) legs.at(i)= new TLegend(0.85, 0.7, 1, 0.9);
+	std::vector<TCanvas*> cvec(6);
+	for (int i = 0; i < 6; i++) cvec.at(i) = new TCanvas();
+	std::vector<TLegend*> legs(6);
+	for (int i = 0; i < 6; i++) legs.at(i)= new TLegend(0.85, 0.7, 1, 0.9);
 	runtimes.open("runlog.txt");
 	int i = 0;
 	while( runtimes.is_open() && !runtimes.eof()) {
 		while (getline(runtimes, line)) {
-				//std::cout << line << std::endl;
 				if (line.find("End") != std::string::npos) runtimes.close();
 				if (line.find("#") != std::string::npos) {
 					std::istringstream templine(line);
@@ -346,7 +388,6 @@ int main()
 					while (getline(templine, temp, ' ')) {
 						try {
 							stof(temp);
-							//if (temp == fnames.at(i)) continue;
 							fnames.push_back(temp);
 							std::vector <std::string> blah (0);
 							t.push_back(blah);
@@ -360,20 +401,15 @@ int main()
 				if(line.find("#")==std::string::npos && line.find("End")==std::string::npos) {
 					if (i > 0) {
 						t.at(i-1).push_back(line);
-						//std::cout << line << std::endl;
-
 						nruns[i - 1]++;
 					}
 					else continue;
 				}
-				//if(line.find("Fil")) runtimes.close();
-
-		}
+			}
 	}
 	for (int i = 0; i < fnames.size(); i++) {
 		std::cout << fnames.at(i) << std::endl;
 		bn[i] = std::stoi(fnames[i]);
-		//fnames[4 + i] = fnames[i] + "_run_2";
 	}
 	int l = 0;
 	for (int i = 0; i < fnames.size(); i++)
@@ -381,18 +417,15 @@ int main()
 
 		avg_hists.clear();
 		std::cout << "Starting with board number " << fnames[i] << std::endl;
-	//	bn[i] = std::stoi(fnames[i]);
-	//	t[i] = "#** Start session " + t[i] + "**";
-		//if (bn[i] != 23) continue;
 		std::string ftnames = "boardnumber_" + fnames[i]+".root";
 		files.push_back(new TFile(ftnames.c_str(), "RECREATE"));
 		std::vector <TH1F*> ttemps;
-		//std::cout << nruns[i] << std::endl;
-		//std::vector<TH1F*>avg_hists(4);
 		avg_hists.push_back( new TH1F(("Avd" + fnames[i]).c_str(), "Average Voltages in Digital Channel on Chip ; Voltage averaged over 1 minute intervals (V)", 150, 1.49, 1.56));
 		avg_hists.push_back( new TH1F(("Aad" + fnames[i]).c_str(), "Average Curents in Digital Channel on Board ; Current averaged over 1 minute intervals (A)", 150, 0.0315, 0.0355));
 		avg_hists.push_back( new TH1F(("Ava" + fnames[i]).c_str(), "Average Voltages in Analog Channel on Board ; Voltage averaged over 1 minute intervals (V)", 200, 0.8, 1.55));
 		avg_hists.push_back(new TH1F(("Aaa" + fnames[i]).c_str(), "Average Curents in Analog Channel on Board ; Current averaged over 1 minute intervals (A)", 100, 0.03, 0.06));
+		avg_hists.push_back(new TH1F(("vdreg" + fnames[i]).c_str(), "Average Regulated Voltage in Digital Channel on Chip ; Voltage averaged over 1 minute intervals (mV)", 1000, 0, 1300));
+		avg_hists.push_back(new TH1F(("vareg" + fnames[i]).c_str(), "Average Regulated Voltage in Analog Channel on Chip ; Voltage averaged over 1 minute intervals (mV)", 1000, 300, 1300));
 		ttemps.push_back(new TH1F("a", "b", 100, 0, 25));
 		ttemps.push_back(new TH1F("c", "b", 100, 0, 25));
 		ttemps.push_back(new TH1F("d", "b", 25, -1, 1));
@@ -416,11 +449,11 @@ int main()
 		}
 		for (int j = 0; j < avg_hists.size(); j++) {
 			avg_hists.at(j)->Write();
-			if(ttemps.at(j)!=NULL){
-				ttemps.at(j)->Write();
+			if(j<ttemps.size()){
+			if(ttemps.at(j)!=NULL)	ttemps.at(j)->Write();
 			}
 			avg_hists.at(j)->SetStats(0);
-			avg_hists.at(j)->SetLineColor(i);
+			avg_hists.at(j)->SetLineColor(i+1);
 			//avg_hists.at(j)->Sumw2();
 			avg_hists.at(j)->Scale(1 / (avg_hists.at(j)->Integral()));
 			cvec.at(j)->cd();
@@ -439,7 +472,12 @@ int main()
 		else files.at(i)->Close();
 		std::cout << fnames.at(i) << " is closed" << std::endl;
 	}
-	for (int i = 0; i < 4; i++) {
+//	std::vector<std::thread> thr;
+//	for (int i = 0; i < fnames.size(); i++) {
+//		thr.push_back( std::thread(each_board_run,fnames.at(i), nruns[i], bn[i], t.at(i), legs, cvec, i));
+//	}
+//	for (int i = 0; i < fnames.size(); i++) thr.at(i).join();
+	for (int i = 0; i < cvec.size(); i++) {
 		cvec.at(i)->Print(("Canvas_" + std::to_string(i) + ".pdf").c_str());
 		cvec.at(i)->SetLogy();
 		cvec.at(i)->Print(("Canvas_" + std::to_string(i) + "log_y.pdf").c_str());
