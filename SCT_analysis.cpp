@@ -18,7 +18,7 @@
 #include "C:/root_v5.34.36/include/TVectorF.h"
 std::vector <TH1F*> PAall, PDall;
 std::vector <TGraph*> tempgraphs;
-std::vector <TH1F*> avg_hists;
+//std::vector <TH1F*> avg_hists;
 std::vector<TH1F*> TempLoss(std::vector<std::vector<float>> data, std::string board_label, const long init_time)
 {
 	TH1F* Temp = new TH1F("temp", "temp", 100, 0, 20);
@@ -100,7 +100,7 @@ std::vector<std::vector<float>> time_averging(std::vector<std::vector<float>> da
 //	std::cout << "Readout vectors have size " << ta_vd.size() << std::endl;
 	return avgs;
 }
-int scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_code, bool aon, bool lastof, int rn, int lastline, std::vector<TH1F*> ttemps)
+int scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_code, bool aon, bool lastof, int rn, int lastline, std::vector<TH1F*> ttemps, std::vector<TH1F*> avg_hists)
 {
 	std::string readout = "";
 	int wc = 0, line = 0, tline = 0;
@@ -121,11 +121,11 @@ int scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_code
 			tline++;
 			if (tline < lastline)continue;
 			//std::cout << tline << std::endl;
-			if (readout.find(time_code.c_str()) == std::string::npos &&wc==0 &&hasread==0) std::cout << '\r' << "Looking for value at line " << tline << std::flush;
+		//	if (readout.find(time_code.c_str()) == std::string::npos &&wc==0 &&hasread==0) std::cout << '\r' << "Looking for value at line " << tline << std::flush;
 			if (readout.find(time_code.c_str()) != std::string::npos) {
 				wc = 1;
 				hasread = true;
-				std::cout << "\n Start signal " << time_code << " sent" << "\n Line is " <<tline <<"\n Line reads " <<readout << std::endl;
+				//std::cout << "\n Start signal " << time_code << " sent" << "\n Line is " <<tline <<"\n Line reads " <<readout << std::endl;
 				line = tline;
 			}
 			if (readout.find("Start") != std::string::npos && readout.find(time_code.c_str()) == std::string::npos) wc = 0;
@@ -173,39 +173,45 @@ int scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_code
 		}
 	}
 	std::cout << " \n Having escaped the carven of the terrible while loop, our hero travels forth" << std::endl;
-	hists.push_back(new TH1F(("vd" + std::to_string(rn)).c_str(), "Voltage in Digital Channel; Time (s); Voltage (V)", vals.size(), 0, 10 * vals.size()));
-	//std::cout << vals.at(0).size() << std::endl;
+/*	try {
+		hists.push_back(new TH1F(("vd" + std::to_string(rn)).c_str(), "Voltage in Digital Channel; Time (s); Voltage (V)", vals.size(), 0, 10 * vals.size()));
+		//std::cout << vals.at(0).size() << std::endl;
 
-	for (int i = 0; i < vals.size(); i++) {
-		try {
-			vals.at(i).at(0) = vals.at(i).at(0) - vals.at(0).at(0);
-			//std::cout << " \r Time of envent is at " << vals.at(i).at(0) << "seconds from start" << std::flush;
-			hists.at(0)->SetBinContent(i, vals.at(i).at(1));
-			//std::cout <<"There are "<< vals.at(i).size() <<" variables at play" << std::endl;
-		}
+		for (int i = 0; i < vals.size(); i++) {
+			try {
+				vals.at(i).at(0) = vals.at(i).at(0) - vals.at(0).at(0);
+				//std::cout << " \r Time of envent is at " << vals.at(i).at(0) << "seconds from start" << std::flush;
+				hists.at(0)->SetBinContent(i, vals.at(i).at(1));
+				//std::cout <<"There are "<< vals.at(i).size() <<" variables at play" << std::endl;
+			}
 
-		catch (std::exception& e) { //std::cout << " \n Error in element " <<i  <<"of type " <<e.what()<< std::endl;
-			continue;
+			catch (std::exception& e) { //std::cout << " \n Error in element " <<i  <<"of type " <<e.what()<< std::endl;
+				continue;
+			}
 		}
 	}
-	if (boardnumber == 48) std::cout << "Sample Current " << vals.at(10).at(2) << std::endl;
-	hists.push_back(new TH1F(("id" + std::to_string(rn)).c_str(), "Current in Digital Channel; Time (s); Current (mA)", vals.size(), 0, 10 * vals.size()));
-	for (int i = 0; i < vals.size(); i++) {
-		try { hists.at(1)->SetBinContent(i, 1000 * vals.at(i).at(2)); }
-		catch (...) {
-			continue;
+	catch (std::exception& e) {};
+//	if (boardnumber == 48) std::cout << "Sample Current " << vals.at(10).at(2) << std::endl;
+	try {
+		hists.push_back(new TH1F(("id" + std::to_string(rn) + std::to_string(boardnumber)).c_str(), "Current in Digital Channel; Time (s); Current (mA)", vals.size(), 0, 10 * vals.size()));
+		for (int i = 0; i < vals.size(); i++) {
+			try { hists.at(1)->SetBinContent(i, 1000 * vals.at(i).at(2)); }
+			catch (...) {
+				continue;
+			}
 		}
 	}
-	hists.push_back(new TH1F(("pd" + std::to_string(rn)).c_str(), "Power in Digital Channel; Time (s); Power(mW)", vals.size(), 0, 10 * vals.size()));
+	catch (std::exception& e) { std::cout << e.what() << std::endl; }
+	hists.push_back(new TH1F(("pd" + std::to_string(rn) + std::to_string(boardnumber)).c_str(), "Power in Digital Channel; Time (s); Power(mW)", vals.size(), 0, 10 * vals.size()));
 	for (int i = 0; i < vals.size(); i++) {
 		try {
 			//vals.at(i).at(0) = vals.at(i).at(0) - vals.at(0).at(0);
 			hists.at(2)->SetBinContent(i, vals.at(i).at(1)*vals.at(i).at(2) * 1000);
 		}
 		catch (std::exception& e) { continue; }
-	}
+	}*/
 	if (aon = true) {
-		hists.push_back(new TH1F(("va"+std::to_string(rn)).c_str(), "Voltage in Analog Channel; Time (s); Voltage (V)", vals.size(), 0, 10 * vals.size()));
+		//hists.push_back(new TH1F(("va"+std::to_string(rn) + std::to_string(boardnumber)).c_str(), "Voltage in Analog Channel; Time (s); Voltage (V)", vals.size(), 0, 10 * vals.size()));
 		//std::cout << vals.at(0).size() << std::endl;
 
 		for (int i = 0; i < vals.size(); i++) {
@@ -221,14 +227,14 @@ int scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_code
 				continue;
 			}
 		}
-		hists.push_back(new TH1F(("ia"+std::to_string(rn)).c_str(), "Current in Analog Channel; Time (s); Current (mA)", vals.size(), 0, 10 * vals.size()));
+		hists.push_back(new TH1F(("ia"+std::to_string(rn) + std::to_string(boardnumber)).c_str(), "Current in Analog Channel; Time (s); Current (mA)", vals.size(), 0, 10 * vals.size()));
 		for (int i = 0; i < vals.size() - 1; i++) {
 			try { hists.at(4)->SetBinContent(i, 1000 * vals.at(i).at(4)); }
 			catch (...) {
 				continue;
 			}
 		}
-		hists.push_back(new TH1F(("pa"+std::to_string(rn)).c_str(), "Power in Analog Channel; Time (s); Power(mW)", vals.size(), 0, 10 * vals.size()));
+		hists.push_back(new TH1F(("pa"+std::to_string(rn)+std::to_string(boardnumber)).c_str(), "Power in Analog Channel; Time (s); Power(mW)", vals.size(), 0, 10 * vals.size()));
 		for (int i = 0; i < vals.size(); i++) {
 			try {
 				//vals.at(i).at(0) = vals.at(i).at(0) - vals.at(0).at(0);
@@ -259,7 +265,7 @@ int scan_dat_file(fstream* inf, TFile* f, int boardnumber, std::string time_code
 	tempgraphs.push_back(new TGraph(C, T)); //creates current graphs
 	std::cout << "\n Temp is: " << T[index / 2] << " C on the chip" << std::endl;
 	tempgraphs.push_back(new TGraph(V, T));
-	for (int i = 0; i < hists.size(); i++) hists.at(i)->Write();
+	//for (int i = 0; i < hists.size(); i++) hists.at(i)->Write();
 	//***NOTE: PD & PA have older variable names from attempting to plot Powers instead of currents, Too lazy to change ***
 	PAall.push_back(hists.at(4)); //analog current
 	PDall.push_back(hists.at(1)); //Digital current
@@ -313,25 +319,30 @@ void each_board_run(std::string fnames, int nruns, int bn, std::vector<std::stri
 {
 	int l = 0;
 	std::vector<TH1F*> avg_hists, ttemps;
-	std::cout << "Starting with board number " << fnames << std::endl;
+	//std::cout << "Starting with board number " << fnames << std::endl;
 	std::string ftnames = "boardnumber_" + fnames+ ".root";
 	TFile* files=new TFile(ftnames.c_str(), "RECREATE"); //This line throws a memory write error
 	avg_hists.push_back(new TH1F(("Avd" + fnames).c_str(), "Average Voltages in Digital Channel on Chip ; Voltage averaged over 1 minute intervals (V)", 150, 1.49, 1.56));
 	avg_hists.push_back(new TH1F(("Aad" + fnames).c_str(), "Average Curents in Digital Channel on Board ; Current averaged over 1 minute intervals (A)", 150, 0.0315, 0.0355));
 	avg_hists.push_back(new TH1F(("Ava" + fnames).c_str(), "Average Voltages in Analog Channel on Board ; Voltage averaged over 1 minute intervals (V)", 200, 0.8, 1.55));
 	avg_hists.push_back(new TH1F(("Aaa" + fnames).c_str(), "Average Curents in Analog Channel on Board ; Current averaged over 1 minute intervals (A)", 100, 0.03, 0.06));
+	avg_hists.push_back(new TH1F(("vareg" + fnames).c_str(), "Average Regulated Voltages in Analog Channel on Board ; Voltage averaged over 1 minute intervals (mV)", 500, 0, 1500));
+	avg_hists.push_back(new TH1F(("vdred" + fnames).c_str(), "Average Regulated Voltages in Digital Channel on Board ; Current averaged over 1 minute intervals (mV)", 500, 0, 1500));
 	ttemps.push_back(new TH1F(("a"+fnames).c_str(), "b", 100, 0, 25));
-	ttemps.push_back(new TH1F("c", "b", 100, 0, 25));
-	ttemps.push_back(new TH1F("d", "b", 25, -1, 1));
-	ttemps.push_back(new TH1F("e", "b", 100, 0, 20));
+	ttemps.push_back(new TH1F(("c"+fnames).c_str(), "b", 100, 0, 25));
+	ttemps.push_back(new TH1F(("d"+fnames).c_str(), "b", 25, -1, 1));
+	ttemps.push_back(new TH1F(("e"+fnames).c_str(), "b", 100, 0, 20));
 	int lastline = 0;
+	//std::cout << files->GetName() << std::endl;
 	for (int j = 0; j < nruns; j++)
 	{
+		files->cd();
+		std::cout << files->GetName() << std::endl;
 		fstream log_file("C:/Users/Silas Grossberndt/Documents/ABC_Boards/TIDLogTesting.dat"); //to reset the read code each time
 		bool lo = (j == nruns);
 		l++;
 		try{
-				lastline = scan_dat_file(&log_file, files, bn, t.at(j), true, lo, j, lastline, ttemps);
+				lastline = scan_dat_file(&log_file, files, bn, t.at(j), true, lo, j, lastline, ttemps, avg_hists);
 				std::cout << "Run number " << j << " complete on chip " << bn << std::endl;
 			}
 		catch (std::exception& e) { continue; }
@@ -345,16 +356,19 @@ void each_board_run(std::string fnames, int nruns, int bn, std::vector<std::stri
 		}
 		avg_hists.at(j)->SetStats(0);
 		avg_hists.at(j)->SetLineColor(i);
-		avg_hists.at(j)->Scale(1 / (avg_hists.at(j)->Integral()));
-		cvec.at(j)->cd();
-		if (i == 0) {
-			std::string title = avg_hists.at(j)->GetTitle();
-			avg_hists.at(j)->SetTitle((title + " Renormailzed to #int =1").c_str());
+		try {
+			avg_hists.at(j)->Scale(1 / (avg_hists.at(j)->Integral()));
+			cvec.at(j)->cd();
+			if (i == 0) {
+				std::string title = avg_hists.at(j)->GetTitle();
+				avg_hists.at(j)->SetTitle((title + " Renormailzed to #int =1").c_str());
+			}
+			avg_hists.at(j)->GetYaxis()->SetRangeUser(0.00001, 1);
+			legs.at(j)->AddEntry(avg_hists.at(j), fnames.c_str());
+			avg_hists.at(j)->Draw("same");
+			legs.at(j)->Draw();
 		}
-	avg_hists.at(j)->GetYaxis()->SetRangeUser(0.00001, 1);
-	legs.at(j)->AddEntry(avg_hists.at(j), fnames.c_str());
-	avg_hists.at(j)->Draw("same");
-	legs.at(j)->Draw();
+		catch (...) { std::cout << "Error is in the writing" << std::endl; }
 	}
 	files->Close();
 	std::cout << fnames << " is closed" << std::endl;
@@ -412,7 +426,7 @@ int main()
 		bn[i] = std::stoi(fnames[i]);
 	}
 	int l = 0;
-	for (int i = 0; i < fnames.size(); i++)
+/*	for (int i = 0; i < fnames.size(); i++)
 	{
 
 		avg_hists.clear();
@@ -472,11 +486,12 @@ int main()
 		else files.at(i)->Close();
 		std::cout << fnames.at(i) << " is closed" << std::endl;
 	}
-//	std::vector<std::thread> thr;
-//	for (int i = 0; i < fnames.size(); i++) {
-//		thr.push_back( std::thread(each_board_run,fnames.at(i), nruns[i], bn[i], t.at(i), legs, cvec, i));
-//	}
-//	for (int i = 0; i < fnames.size(); i++) thr.at(i).join();
+	*/
+std::vector<std::thread> thr;
+for (int i = 0; i < fnames.size(); i++) {
+	thr.push_back( std::thread(each_board_run,fnames.at(i), nruns[i], bn[i], t.at(i), legs, cvec, i));
+	}
+for (int i = 0; i < fnames.size(); i++) thr.at(i).join();
 	for (int i = 0; i < cvec.size(); i++) {
 		cvec.at(i)->Print(("Canvas_" + std::to_string(i) + ".pdf").c_str());
 		cvec.at(i)->SetLogy();
