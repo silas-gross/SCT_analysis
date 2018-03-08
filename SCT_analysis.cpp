@@ -3,10 +3,8 @@
 
 #include "stdafx.h"
 #include <fstream>
-//include "C:/root_v5.34.36/include/TH1.h"
 #include "C:/root_v5.34.36/include/TFile.h"
 #include <string>
-//#include "C:/root_v5.34.36/include/TTree.h"
 #include "C:/root_v5.34.36/include/TH1F.h"
 #include <vector>
 #include <iostream>
@@ -16,9 +14,7 @@
 #include "C:/root_v5.34.36/include/TLegend.h"
 #include "C:/root_v5.34.36/include/TGraph.h"
 #include "C:/root_v5.34.36/include/TVectorF.h"
-//std::vector <TH1F*> PAall, PDall;
-//std::vector <TGraph*> tempgraphs;
-//std::vector <TH1F*> avg_hists;
+
 std::vector<TH1F*> TempLoss(std::vector<std::vector<float>> data, std::string board_label, const long init_time)
 {
 	TH1F* Temp = new TH1F(("temp"+board_label).c_str(), "temp", 100, 0, 20);
@@ -334,40 +330,34 @@ void each_board_run(std::string fnames, int nruns, int bn, std::vector<std::stri
 	ttemps.push_back(new TH1F(("d"+fnames).c_str(), "b", 25, -1, 1));
 	ttemps.push_back(new TH1F(("e"+fnames).c_str(), "b", 100, 0, 20));
 	int lastline = 0;
-	//std::cout << files->GetName() << std::endl;
-	//if (files->IsOpen) std::cout << "It should be open" << std::endl;
-	//if (files == 0x0) std::cout << "files variable is the issue" << std::endl;
 	for (int j = 0; j < nruns; j++)
 	{
-		//std::cout << files->GetName() << std::endl;
 		fstream log_file("C:/Users/Silas Grossberndt/Documents/ABC_Boards/TIDLogTesting.dat"); //to reset the read code each time
 		bool lo = (j == nruns);
 		l++;
 		try{
-			//if (files = NULL) std::cout << "files variable is the issue" << std::endl;
 				lastline = scan_dat_file(&log_file, bn, t.at(j), true, lo, j, lastline, ttemps, avg_hists);
 				std::cout << " \n Run number " << j << " complete on chip " << bn << std::endl;
 			}
 		catch (std::exception& e) { continue; }
-			//l++;
+		
 		log_file.close();
 	}
 	try { std::cout << avg_hists.size() << std::endl; }
 	catch (...) { std::cout << "Size appears to be NULL" << std::endl; }
-	//std::cout << "file location is " <<files << std::endl;
-	//TFile* files = new TFile(ftnames.c_str(), "RECREATE");
 	for (int j = 0; j < avg_hists.size(); j++) {
-		TCanvas* c = new TCanvas();
-		c->cd();
-		//std::cout <<"\n file location is " <<std::hex << files << std::endl;
-		//files->cd();
-		avg_hists.at(j)->Draw();
-		c->Print(("ftnames_" + std::to_string(j)).c_str());
+		TCanvas* canvi = new TCanvas();
+		canvi->cd();
+		try { avg_hists.at(j)->Draw(); }
+		catch (...) { std::cout << "\n average hist are strange at address " << &avg_hists; }
+		std::cout << "The canvases are made, at address " <<canvi << std::endl;
+		canvi->Print((ftnames + std::to_string(j)+".pdf").c_str()); 
 		if (ttemps.at(j) != NULL) {
 			ttemps.at(j)->Write();
 		}
 		avg_hists.at(j)->SetStats(0);
 		avg_hists.at(j)->SetLineColor(i);
+		std::cout << "what is the cvec address? " << &cvec.at(j) << std::endl;
 		try {
 			avg_hists.at(j)->Scale(1 / (avg_hists.at(j)->Integral()));
 			cvec.at(j)->cd();
